@@ -1,9 +1,14 @@
 {
   "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
-    "module": "esnext",
+    "module": "CommonJS",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "moduleResolution": "node",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     "target": "es2017"
   }
 }

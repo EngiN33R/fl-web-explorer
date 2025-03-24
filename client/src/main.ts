@@ -1,5 +1,9 @@
 import "./style.css";
 
+window.onunhandledrejection = function (e) {
+  console.error(e);
+};
+
 export * from "./navmap";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
