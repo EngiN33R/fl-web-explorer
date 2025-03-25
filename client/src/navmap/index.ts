@@ -1,14 +1,17 @@
 import { Task } from "@lit/task";
-import { LitElement, css, html } from "lit";
+import { LitElement, TemplateResult, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import * as THREE from "three";
-import {
-  CSS3DObject,
-  CSS3DRenderer,
-  CSS3DSprite,
-  OrbitControls,
-} from "three/examples/jsm/Addons.js";
-import type { ISystem, IObject, IBase, IZone } from "fl-node-orm";
+import type { ISystem } from "fl-node-orm";
+
+const IGNORED_ARCHETYPES = [
+  "trade_lane_ring",
+  "nav_buoy",
+  "wplatform",
+  "space_tank",
+  "dock_ring",
+  "docking_fixture",
+  /depot_.+/,
+];
 
 @customElement("nav-map")
 export class NavigationMap extends LitElement {
@@ -16,26 +19,47 @@ export class NavigationMap extends LitElement {
     :host {
       .navmap-root {
         position: relative;
-        width: 800px;
-        height: 800px;
-        background-color: black;
+        width: 1200px;
+        height: 1200px;
+        background-color: #111122;
 
         &.universe-map {
           background-image: url("http://localhost:3000/texture/navmap");
           background-size: contain;
         }
 
-        .system {
+        &.system-map {
+          cursor: move;
+        }
+
+        .gridline {
+          background-color: #0055ff77;
+          position: absolute;
+
+          &.vertical {
+            height: 100%;
+            width: 2px;
+          }
+
+          &.horizontal {
+            width: 100%;
+            height: 2px;
+          }
+        }
+
+        .node {
+          position: absolute;
           display: flex;
           flex-direction: column;
           align-items: center;
           cursor: pointer;
           background: none;
           border: none;
-          font-size: 14px;
-          padding-top: 15px;
-          margin-top: -7.5px;
+          font-size: 18px;
           z-index: 2;
+          font-family: "Agency FB", sans-serif;
+          -webkit-font-smoothing: subpixel-antialiased;
+          backface-visibility: hidden;
 
           &::before {
             position: absolute;
@@ -45,7 +69,16 @@ export class NavigationMap extends LitElement {
             border-radius: 100%;
             width: 15px;
             height: 15px;
-            margin-top: -15px;
+            margin-top: -7.5px;
+            margin-left: -7.5px;
+          }
+
+          .label {
+            position: absolute;
+            width: max-content;
+            max-width: 200px;
+            margin-left: -7.5px;
+            margin-top: 10px;
           }
 
           &:hover {
@@ -56,6 +89,7 @@ export class NavigationMap extends LitElement {
         }
 
         .connection {
+          position: absolute;
           border-bottom: 1px solid;
 
           &.directional {
@@ -73,36 +107,6 @@ export class NavigationMap extends LitElement {
             }
           }
         }
-
-        .object {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          cursor: pointer;
-          background: none;
-          border: none;
-          font-size: 14px;
-          padding-top: 15px;
-          margin-top: -7.5px;
-          z-index: 2;
-
-          &::before {
-            position: absolute;
-            content: "";
-            background-color: white;
-            border: 1px solid black;
-            border-radius: 100%;
-            width: 15px;
-            height: 15px;
-            margin-top: -15px;
-          }
-
-          &:hover {
-            &::before {
-              border-color: #f00;
-            }
-          }
-        }
       }
     }
   `;
@@ -111,106 +115,91 @@ export class NavigationMap extends LitElement {
   @property()
   system?: string | null = null;
 
-  #renderer: any = null;
-  #scene: THREE.Scene | null = null;
-  #camera: THREE.Camera | null = null;
-  #controls: OrbitControls | null = null;
-
-  firstUpdated() {
-    this.#scene = new THREE.Scene();
-
-    const axesHelper = new THREE.AxesHelper(5);
-    this.#scene.add(axesHelper);
-
-    const renderer = new CSS3DRenderer();
-    renderer.setSize(800, 800);
-    this.shadowRoot!.getElementById("navmap-root")!.appendChild(
-      renderer.domElement
-    );
-    this.#renderer = renderer;
-
-    requestAnimationFrame(this.#renderThree);
-  }
-
-  #renderThree = () => {
-    if (this.#renderer && this.#scene && this.#camera) {
-      for (const child of this.#scene.children) {
-        if (child instanceof CSS3DObject) {
-          if (
-            child.element.className.includes("connection") &&
-            !child.element.className.includes("directional")
-          ) {
-            child.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
-          }
-        }
-      }
-      this.#renderer.render(this.#scene, this.#camera);
-      if (this.#controls) {
-        this.#controls.update();
-      }
-    }
-    requestAnimationFrame(this.#renderThree);
-  };
-
   #createSystemScene(system: ISystem) {
-    this.#scene?.clear();
+    const elements: TemplateResult[] = [];
 
-    const scale = 0.01;
+    const size = system.size;
+
+    const toRel = <T extends number[]>(pos: T) =>
+      pos.map((v) => 50 + (v / size) * 100) as T;
+
+    for (let x = 0; x <= 8; x++) {
+      const gridline = html`<div
+        class="gridline vertical"
+        style="left: ${(100 / 8) * x}%"
+      ></div>`;
+      elements.push(gridline);
+    }
+    for (let y = 0; y <= 8; y++) {
+      const gridline = html`<div
+        class="gridline horizontal"
+        style="top: ${(100 / 8) * y}%"
+      ></div>`;
+      elements.push(gridline);
+    }
 
     for (const base of system.bases) {
-      const root = document.createElement("button");
-      root.className = "object base";
-      root.dataset.type = "base";
-      root.textContent = base.name;
-      root.title = `${base.name} (${base.nickname})`;
-      root.dataset.base = base.nickname;
-
-      const obj = new CSS3DSprite(root);
-      const [x, z, y] = base.position.map((v) => v * scale);
-      obj.position.set(x, -y, z);
-      this.#scene?.add(obj);
+      const [relX, , relY] = toRel(base.position);
+      const element = html`<button
+        class="node"
+        data-type="base"
+        title="${base.name} (${base.nickname})"
+        data-base="${base.nickname}"
+        style="left: ${relX}%; top: ${relY}%"
+      >
+        <span class="label">${base.name}</span>
+      </button>`;
+      elements.push(element);
     }
 
-    // for (const object of system.objects) {
-    // if (object.)
-    // }
+    for (const object of system.objects) {
+      if (
+        !object.name ||
+        IGNORED_ARCHETYPES.some((a) => !!object.archetype.match(a)) ||
+        !!object.parent
+      ) {
+        continue;
+      }
+      const [relX, , relY] = toRel(object.position);
+      const element = html`<button
+        class="node"
+        data-type="${object.archetype}"
+        title="${object.name} (${object.nickname})"
+        data-base="${object.nickname}"
+        style="left: ${relX}%; top: ${relY}%"
+      >
+        <span class="label">${object.name}</span>
+      </button>`;
+      elements.push(element);
+    }
 
     for (const tradelane of system.tradelanes) {
-      const [ox, oz, oy] = tradelane.startPosition.map((v) => v * scale);
-      const [tx, tz, ty] = tradelane.endPosition.map((v) => v * scale);
-      const connectionDom = document.createElement("div");
-      connectionDom.className = "connection";
-      connectionDom.style.borderColor = "#08f";
-      connectionDom.style.color = connectionDom.style.borderColor;
-      connectionDom.style.width = `${Math.sqrt((ox - tx) ** 2 + (oy - ty) ** 2 + (oz - tz) ** 2)}px`;
-      const obj = new CSS3DObject(connectionDom);
-      obj.position.set(
-        ox - (ox - tx) / 2,
-        -oy + (oy - ty) / 2,
-        oz - (oz - tz) / 2
+      const [ox, oz, oy] = toRel(tradelane.startPosition);
+      const [tx, tz, ty] = toRel(tradelane.endPosition);
+      const length = Math.sqrt(
+        (ox - tx) ** 2 + (oy - ty) ** 2 + (oz - tz) ** 2
       );
-      obj.rotateOnWorldAxis(
-        new THREE.Vector3(0, 0, 1),
-        -Math.atan2(ty - oy, tx - ox)
+      const width = `${length}%`;
+      const rotation = Math.round(
+        (Math.atan2(ty - oy, tx - ox) * 180) / Math.PI
       );
-      this.#scene?.add(obj);
+      const [relX, relY] = [(tx + ox) / 2, (ty + oy) / 2];
+      const connection = html`<div
+        class="connection"
+        style="border-color: #08f; color: #08f; width: ${width}; transform: translate(-50%, -50%) rotate(${rotation}deg); left: ${relX}%; top: ${relY}%"
+      ></div>`;
+      elements.push(connection);
     }
 
-    const camera = new THREE.PerspectiveCamera();
-    camera.position.set(0, 0, 150000 * scale);
-    camera.lookAt(0, 0, 0);
-    // camera.zoom = 0.001;
-    this.#camera = camera;
-
-    this.#controls = new OrbitControls(camera, this.#renderer.domElement);
-
-    this.#scene?.add(new THREE.AxesHelper(5));
+    return elements;
   }
 
   #createUniverseScene(systems: ISystem[]) {
-    this.#scene?.clear();
+    const elements: TemplateResult[] = [];
 
-    const scale = 50;
+    // const scale = 50;
+    const toRel = <T extends number[]>(pos: T) =>
+      pos.map((v) => (v / 18) * 90 + 15) as T;
 
     const systemsMap = systems.reduce((map, s) => {
       map.set(s.nickname as string, s);
@@ -230,16 +219,17 @@ export class NavigationMap extends LitElement {
     }, new Map<string, string>());
 
     for (const s of systems) {
-      const systemDom = document.createElement("button");
-      systemDom.className = "system";
-      systemDom.textContent = s.name;
-      systemDom.title = `${s.name} (${s.nickname})`;
-      systemDom.dataset.system = s.nickname;
-      systemDom.addEventListener("click", this.#selectSystem.bind(this));
-      const obj = new CSS3DObject(systemDom);
-      const [x, y] = s.position.map((v) => v * scale);
-      obj.position.set(x, -y, 0);
-      this.#scene?.add(obj);
+      const [x, y] = toRel(s.position);
+      const system = html`<button
+        class="node"
+        title="${s.name} (${s.nickname})"
+        data-system="${s.nickname}"
+        @click="${this.#selectSystem.bind(this)}"
+        style="left: ${x}%; top: ${y}%"
+      >
+        <span class="label">${s.name}</span>
+      </button>`;
+      elements.push(system);
     }
 
     for (const [conn, type] of connectionsMap.entries()) {
@@ -251,35 +241,25 @@ export class NavigationMap extends LitElement {
       //   continue;
       // }
 
-      const [ox, oy] = src.position.map((v) => v * scale);
-      const [tx, ty] = dst.position.map((v) => v * scale);
-      const connectionDom = document.createElement("div");
-      connectionDom.className = "connection directional";
-      connectionDom.style.borderColor =
-        type === "both" ? "#f0f" : type === "jumpgate" ? "#00f" : "#f00";
-      connectionDom.style.color = connectionDom.style.borderColor;
-      connectionDom.dataset.from = src.nickname;
-      connectionDom.dataset.to = dst.nickname;
-      connectionDom.style.width = `${Math.sqrt((ox - tx) ** 2 + (oy - ty) ** 2)}px`;
-      const obj = new CSS3DObject(connectionDom);
-      obj.position.set(ox - (ox - tx) / 2, -oy + (oy - ty) / 2, 0);
-      obj.rotateOnWorldAxis(
-        new THREE.Vector3(0, 0, 1),
-        -Math.atan2(ty - oy, tx - ox)
+      const [ox, oy] = toRel(src.position);
+      const [tx, ty] = toRel(dst.position);
+      const rotation = Math.round(
+        (Math.atan2(ty - oy, tx - ox) * 180) / Math.PI
       );
-      this.#scene?.add(obj);
+      const color =
+        type === "both" ? "#f0f" : type === "jumpgate" ? "#00f" : "#f00";
+      const length = Math.sqrt((ox - tx) ** 2 + (oy - ty) ** 2);
+      const [relX, relY] = [(tx + ox) / 2, (ty + oy) / 2];
+      const connection = html`<div
+        class="connection directional"
+        style="border-color: ${color}; color: ${color}; width: ${length}%; transform: translate(-50%, -50%) rotate(${rotation}deg); left: ${relX}%; top: ${relY}%"
+        data-from="${src.nickname}"
+        data-to="${dst.nickname}"
+      ></div>`;
+      elements.push(connection);
     }
 
-    const camera = new THREE.OrthographicCamera(
-      -scale * 10,
-      scale * 10,
-      scale * 10,
-      -scale * 10,
-      0.1,
-      2000
-    );
-    camera.position.set(scale * 7, -scale * 7, 1);
-    this.#camera = camera;
+    return elements;
   }
 
   #universeTask = new Task(this, {
@@ -298,32 +278,31 @@ export class NavigationMap extends LitElement {
       return response.json();
     },
     args: () => [this.system],
-    onComplete: (result) => {
-      try {
-        if (this.system) {
-          this.#createSystemScene(result as ISystem);
-        } else {
-          this.#createUniverseScene(result as ISystem[]);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
   });
 
   #selectSystem(e: Event) {
     const system = (e.currentTarget as HTMLElement).dataset.system;
-    console.log(system);
     if (system) {
       this.system = system;
-      this.#scene?.clear();
     }
   }
 
   render() {
-    return html`<section
-      id="navmap-root"
-      class="navmap-root ${this.system ? "system-map" : "universe-map"}"
-    ></section>`;
+    return this.#universeTask.render({
+      complete: (result) => {
+        let elements: TemplateResult[];
+        if (this.system) {
+          elements = this.#createSystemScene(result as ISystem);
+        } else {
+          elements = this.#createUniverseScene(result as ISystem[]);
+        }
+        return html`<section
+          id="navmap-root"
+          class="navmap-root ${this.system ? "system-map" : "universe-map"}"
+        >
+          ${elements}
+        </section>`;
+      },
+    });
   }
 }

@@ -4,7 +4,7 @@ window.onunhandledrejection = function (e) {
   console.error(e);
 };
 
-export * from "./navmap";
+export * from "./navmap/index";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
