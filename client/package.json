@@ -17,6 +17,8 @@
   "dependencies": {
     "@lit/context": "^1.1.4",
     "@lit/task": "^1.0.2",
+    "@panzoom/panzoom": "^4.6.0",
+    "iconoir": "^7.10.1",
     "lit": "^3.2.1",
     "three": "^0.174.0"
   }

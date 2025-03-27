@@ -1,0 +1,476 @@
+#app {
+  display: flex;
+  height: 100vh;
+
+  map-sidebar {
+    flex: 1;
+    box-shadow: -15px 0px 25px -15px #000000aa;
+    z-index: 5;
+  }
+}
+
+nav-map {
+  overflow: hidden;
+
+  #navmap-container {
+    width: 100%;
+  }
+
+  .navmap-root {
+    position: relative;
+    aspect-ratio: 1;
+    height: 100vh;
+    background-color: #111122;
+    overflow: hidden;
+
+    &.universe-map {
+      background-image: url("http://localhost:3000/texture/navmap");
+      background-size: contain;
+    }
+
+    &.system-map {
+      cursor: move;
+    }
+
+    .gridline {
+      background-color: #0055ff77;
+      position: absolute;
+
+      &.vertical {
+        height: 100%;
+        width: 2px;
+      }
+
+      &.horizontal {
+        width: 100%;
+        height: 2px;
+      }
+    }
+
+    .node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 18px;
+      z-index: 5;
+      font-family: "Agency FB", sans-serif;
+      -webkit-font-smoothing: subpixel-antialiased;
+      backface-visibility: hidden;
+
+      &::before {
+        position: absolute;
+        content: "";
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 100%;
+        width: 15px;
+        height: 15px;
+        margin-top: -7.5px;
+        margin-left: -7.5px;
+      }
+
+      .label {
+        position: absolute;
+        width: max-content;
+        max-width: 200px;
+        margin-left: -7.5px;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+
+      &:hover {
+        &::before {
+          border-color: #f00;
+        }
+      }
+    }
+
+    .connection {
+      position: absolute;
+      border-bottom: 1px solid;
+      z-index: 4;
+
+      &.directional {
+        border-radius: 100%;
+        height: 5px;
+
+        &::before {
+          content: "⇁";
+          font-size: 30px;
+          position: absolute;
+          left: calc(50% - 10px);
+          top: -20px;
+        }
+      }
+    }
+
+    .zone {
+      position: absolute;
+      border: 1px solid transparent;
+      border-radius: 100%;
+      cursor: pointer;
+      z-index: 3;
+
+      &:hover {
+        border-color: #fff !important;
+      }
+    }
+  }
+
+  .navmap-root[data-theme="freelancer"] {
+    .node {
+      &::before {
+        /* border-color: transparent;
+        background-color: transparent; */
+        background-size: contain;
+      }
+
+      &[data-type="base"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/spritesheet5_1.png");
+          background-position: -32px -64px;
+          background-size: unset;
+          width: 32px;
+          height: 32px;
+          margin-top: -16px;
+          margin-left: -7.5px;
+        }
+      }
+
+      &[data-archetype*="surprise_"],
+      &[data-archetype*="suprise_"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          width: 12px;
+          height: 12px;
+          margin-top: -6px;
+          margin-left: -6px;
+          background-image: url("/img/surprisex.png");
+        }
+      }
+
+      &[data-archetype*="jumpgate"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/jumpgate.png");
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -12px;
+        }
+      }
+
+      &[data-archetype*="jumphole"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/jumphole.png");
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -12px;
+        }
+      }
+
+      &[data-archetype*="planet"],
+      &[data-type="base"][data-archetype*="planet"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/spritesheet5_1.png");
+          background-position: 0 0;
+          background-size: unset;
+          width: 32px;
+          height: 32px;
+          margin-top: -16px;
+          margin-left: -16px;
+        }
+      }
+
+      &[data-type="base"][data-archetype*="planet"] {
+        &::before {
+          background-position-x: -32px;
+        }
+      }
+
+      &[data-archetype*="sun"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/spritesheet5_1.png");
+          background-position: -64px -64px;
+          background-size: unset;
+          width: 64px;
+          height: 64px;
+          margin-top: -32px;
+          margin-left: -7.5px;
+          transform: scale(0.5);
+        }
+      }
+
+      &[data-archetype*="depot"],
+      &[data-archetype*="space_tank"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/lootabledepot.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+
+        .label {
+          display: none;
+        }
+      }
+
+      &[data-archetype*="wplatform"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/weaponplatform.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+
+        .label {
+          display: none;
+        }
+      }
+
+      &[data-archetype*="docking_fixture"],
+      &[data-archetype*="dock_ring"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/dockingring.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+
+        .label {
+          display: none;
+        }
+      }
+
+      &[data-type="base"][data-archetype*="liner"],
+      &[data-type="base"][data-archetype*="dreadnought"],
+      &[data-type="base"][data-archetype*="battleship"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/smallspacestation.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+      }
+
+      &[data-type="base"][data-archetype*="largestation"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/largestation.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+      }
+
+      &[data-type="base"][data-archetype*="depot"],
+      &[data-type="base"][data-archetype*="miningbase"],
+      &[data-type="base"][data-archetype*="space_port"] {
+        &::before {
+          border-color: transparent;
+          background-color: transparent;
+          background-image: url("/img/depot.png");
+          background-size: contain;
+          background-position: center center;
+          width: 24px;
+          height: 24px;
+          margin-top: -12px;
+          margin-left: -7.5px;
+        }
+      }
+    }
+
+    .zone {
+      &[data-properties*="NEBULA"] {
+        background-image: url("/img/dustcloud.png");
+        background-blend-mode: multiply;
+        /* filter: brightness(0.5); */
+        border-width: 0;
+      }
+
+      &[data-properties*="ICE"] {
+        background-image: url("/img/terrain_ice.png");
+        background-repeat: repeat;
+      }
+
+      &[data-properties*="ROCK"] {
+        background-image: url("/img/asteroidtest.png");
+        background-repeat: repeat;
+      }
+
+      &[data-properties*="DEBRIS"] {
+        background-image: url("/img/terrain_debris.png");
+        background-repeat: repeat;
+      }
+
+      &[data-properties*="NOMAD"] {
+        background-image: url("/img/terrain_nomadast.png");
+        background-repeat: repeat;
+      }
+
+      &[data-properties*="LAVA"] {
+        background-image: url("/img/terrain_lava.png");
+        background-repeat: repeat;
+      }
+
+      &[data-properties*="MINES"] {
+        background-image: url("/img/terrain_mines.png");
+        background-repeat: repeat;
+      }
+    }
+  }
+}
+
+map-sidebar {
+  height: 100vh;
+  background-color: #242424;
+  padding: 0 12px;
+  display: block;
+
+  search-box,
+  object-details {
+    display: block;
+  }
+
+  .sidebar-root {
+    width: 100%;
+    height: 100%;
+    position: relative;
+
+    #search-container {
+      width: 100%;
+      position: absolute;
+      left: calc(100% + 16px + 12px);
+      top: 12px;
+
+      input[type="search"] {
+        border-radius: 8px;
+        padding: 8px;
+        width: 250px;
+
+        &:has(+ #result-set) {
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+      }
+
+      #result-set {
+        width: 250px;
+        margin-top: 8px;
+        background-color: #242424;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: 0px 0px 10px 0px #000a;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+
+        button {
+          background: none;
+          border: none;
+          text-align: start;
+          cursor: pointer;
+          width: 100%;
+          padding: 8px;
+
+          &:hover {
+            background-color: #08f5;
+          }
+
+          small {
+            display: block;
+          }
+        }
+
+        .status {
+          color: rgba(255, 255, 255, 0.5);
+          padding: 8px;
+          font-size: 13px;
+          display: block;
+        }
+      }
+    }
+
+    object-details {
+      height: 100%;
+    }
+
+    #details-root {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      h1 {
+        margin: 0;
+      }
+
+      .preview {
+        margin: 0 -12px 8px -12px;
+
+        .icon-placeholder {
+          width: 100%;
+          height: 200px;
+          background-color: #363636;
+
+          svg {
+            stroke: #484848;
+            &.fill {
+              fill: #484848;
+            }
+            width: 100%;
+            height: 100%;
+            padding: 12px;
+          }
+        }
+      }
+
+      .dynamic-container {
+        overflow-y: auto;
+        flex: 1;
+        margin-right: -12px;
+        padding-right: 12px;
+      }
+    }
+  }
+}

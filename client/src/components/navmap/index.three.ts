@@ -8,7 +8,7 @@ import {
   CSS3DSprite,
   OrbitControls,
 } from "three/examples/jsm/Addons.js";
-import type { ISystem, IObject, IBase, IZone } from "fl-node-orm";
+import type { ISystemRes } from "../../../../api/src/types";
 
 @customElement("nav-map")
 export class NavigationMap extends LitElement {
@@ -182,7 +182,7 @@ export class NavigationMap extends LitElement {
     requestAnimationFrame(this.#renderThree);
   };
 
-  #createSystemScene(system: ISystem) {
+  #createSystemScene(system: ISystemRes) {
     this.#scene?.clear();
 
     const scale = 0.01;
@@ -264,7 +264,7 @@ export class NavigationMap extends LitElement {
     this.#scene?.add(new THREE.AxesHelper(5));
   }
 
-  #createUniverseScene(systems: ISystem[]) {
+  #createUniverseScene(systems: ISystemRes[]) {
     this.#scene?.clear();
 
     const scale = 50;
@@ -272,7 +272,7 @@ export class NavigationMap extends LitElement {
     const systemsMap = systems.reduce((map, s) => {
       map.set(s.nickname as string, s);
       return map;
-    }, new Map<string, ISystem>());
+    }, new Map<string, ISystemRes>());
 
     const connectionsMap = systems.reduce((map, s) => {
       for (const c of s.connections) {
@@ -340,9 +340,9 @@ export class NavigationMap extends LitElement {
   }
 
   #universeTask = new Task(this, {
-    task: async (_, { signal }) => {
+    task: async ([system], { signal }) => {
       const response = await fetch(
-        `http://localhost:3000/system/${this.system ?? ""}`,
+        `http://localhost:3000/system/${system ?? ""}`,
         {
           signal,
         }
@@ -358,9 +358,9 @@ export class NavigationMap extends LitElement {
     onComplete: (result) => {
       try {
         if (this.system) {
-          this.#createSystemScene(result as ISystem);
+          this.#createSystemScene(result);
         } else {
-          this.#createUniverseScene(result as ISystem[]);
+          this.#createUniverseScene(result);
         }
       } catch (e) {
         console.error(e);

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
-import { tgaToPng } from "../util/tga.ts";
+import { tgaToPng } from "../util/tga";
 
 const router = Router();
 

@@ -5,8 +5,7 @@
     "strict": true,
     "esModuleInterop": true,
     "module": "CommonJS",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "sourceMap": true,
     "moduleResolution": "node",
     "typeRoots": ["./src/types", "./node_modules/@types"],
     "target": "es2017"
