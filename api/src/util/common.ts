@@ -17,6 +17,7 @@ export const serializeSystem = (body: ISystem) => {
     nickname: body.nickname,
     name: body.name,
     infocard: convertXmlToHtml(body.infocard),
+    territory: body.territory,
     position: body.position,
     visit: body.visit,
     connections: Object.values(
@@ -52,11 +53,16 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
       ? DataContext.INSTANCE.findByNickname("faction", body.faction)
       : undefined;
 
+  let infocard = body.infocard;
+  if ("infocards" in body) {
+    infocard = body.infocards.map(convertXmlToHtml).join("<br>");
+  } else if (body.infocard.includes("<RDL>")) {
+    infocard = convertXmlToHtml(body.infocard);
+  }
+
   return {
     ...body,
-    infocard: body.infocard.includes("<RDL>")
-      ? convertXmlToHtml(body.infocard)
-      : body.infocard,
+    infocard,
     system,
     faction: faction
       ? {
