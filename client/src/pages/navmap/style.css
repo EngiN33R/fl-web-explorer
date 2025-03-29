@@ -159,7 +159,8 @@ nav-map {
       &[data-properties*="LAVA"],
       &[data-properties*="NOMAD"],
       &[data-properties*="CRYSTAL"],
-      &[data-properties*="DEBRIS"] {
+      &[data-properties*="DEBRIS"],
+      &[data-properties*="BADLANDS"] {
         background-image:
           linear-gradient(135deg, #8888 25%, transparent 25%),
           linear-gradient(225deg, #8888 25%, transparent 25%),

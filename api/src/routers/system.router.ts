@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
 import { serializeSystem } from "../util/common";
+import { convertXmlToHtml } from "../util/rdl";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.get("/:nickname", async (req, res) => {
   }
   res.json({
     ...system,
+    infocard: convertXmlToHtml(system.infocard),
   });
 });
 

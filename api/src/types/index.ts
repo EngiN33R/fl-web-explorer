@@ -26,3 +26,8 @@ export type ISystemRes = Omit<
   objects: IObjectRes[];
   bases: IBaseRes[];
 };
+
+export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
+  system: ISystemRes;
+  relevance: number;
+};

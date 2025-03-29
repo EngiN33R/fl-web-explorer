@@ -201,7 +201,7 @@ export class ObjectDetailsPane extends LitElement {
             </div>
             <div class="title">
               <h1 class="name">${result.name || "Unnamed"}</h1>
-              ${type === "jump"
+              ${result.goto
                 ? html`<button
                     class="jump"
                     data-nickname="${result.goto?.system}"

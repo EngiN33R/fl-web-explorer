@@ -1,0 +1,52 @@
+.main {
+  display: flex;
+  height: 100%;
+  position: relative;
+
+  .content {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    margin-right: 100px;
+  }
+
+  .navigation {
+    width: 100px;
+    height: 100%;
+    background-color: #242424;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        &.disabled {
+          opacity: 0.5;
+
+          a {
+            cursor: not-allowed;
+          }
+        }
+
+        &:not(.disabled):hover {
+          background-color: #08f5;
+        }
+
+        a {
+          height: 100px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+
+          color: #fff;
+          text-decoration: none;
+        }
+      }
+    }
+  }
+}
