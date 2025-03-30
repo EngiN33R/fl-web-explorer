@@ -1,6 +1,6 @@
-.main {
+:global(#root) {
   display: flex;
-  height: 100%;
+  height: 100vh;
   position: relative;
 
   .content {
@@ -17,6 +17,7 @@
     position: absolute;
     right: 0;
     top: 0;
+    box-shadow: -15px 0px 25px -15px #000000aa;
 
     ul {
       list-style: none;
@@ -45,6 +46,10 @@
 
           color: #fff;
           text-decoration: none;
+
+          &:global(.active) {
+            background-color: #0006;
+          }
         }
       }
     }

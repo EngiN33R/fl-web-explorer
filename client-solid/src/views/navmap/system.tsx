@@ -201,7 +201,7 @@ export function SystemMap() {
   });
 
   return (
-    <div id="navmap-container" class={sx.navmapContainer}>
+    <article id="navmap-container" class={sx.navmapContainer}>
       <SearchBox />
       <div id="navmap-root" class={`${sx.navmapRoot} ${sx.system}`}>
         {/* <Index each={new Array(64)}>
@@ -284,6 +284,6 @@ export function SystemMap() {
       >
         <Galaxy />
       </button>
-    </div>
+    </article>
   );
 }

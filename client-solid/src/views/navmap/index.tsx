@@ -22,13 +22,13 @@ export function NavMapView() {
   });
 
   const [universeData] = createResource(() =>
-    fetch(`http://localhost:3000/system`).then((r) => r.json())
+    fetch(`${import.meta.env.VITE_API_URL}/nav/system`).then((r) => r.json())
   );
   const [systemData] = createResource(
     () => system(),
     (s) =>
       s
-        ? fetch(`http://localhost:3000/system/${s}`)
+        ? fetch(`${import.meta.env.VITE_API_URL}/nav/system/${s}`)
             .then((r) => r.json())
             .then((r: ISystemRes) => ({ ...r, type: "system" }))
         : Promise.resolve(undefined)
@@ -37,7 +37,7 @@ export function NavMapView() {
     () => [object(), systemData()],
     ([o, sys]) => {
       return o
-        ? fetch(`http://localhost:3000/search?q=${o}`)
+        ? fetch(`${import.meta.env.VITE_API_URL}/nav/search?q=${o}`)
             .then((r) => r.json())
             .then((r) => r[0])
         : sys;
@@ -113,12 +113,15 @@ export function NavMapView() {
         pan,
         rect,
         navigate: (props: { system?: string; object?: string }) => {
-          setSearchParams({
-            ...(props.system != null && { system: props.system }),
-            ...((props.system != null || props.object != null) && {
-              nickname: props.object,
-            }),
-          });
+          setSearchParams(
+            {
+              ...(props.system != null && { system: props.system }),
+              ...((props.system != null || props.object != null) && {
+                nickname: props.object,
+              }),
+            },
+            { replace: props.system == null }
+          );
         },
       }}
     >

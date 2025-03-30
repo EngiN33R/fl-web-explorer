@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
-import { keyBy } from "lodash";
 import { serializeObject, serializeSystem } from "../util/common";
+import { convertXmlToHtml } from "../util/rdl";
 
 const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
@@ -16,7 +16,29 @@ const IGNORED_ARCHETYPES = [
 
 const router = Router();
 
-router.get("/", async (req, res) => {
+router.get("/system", async (req, res) => {
+  const systems = DataContext.INSTANCE.entity("system").findAll();
+
+  const result = systems
+    .filter((s) => s.nickname !== "fp7_system" && !!s.position)
+    .map((s) => serializeSystem(s));
+  res.json(result);
+});
+
+router.get("/system/:nickname", async (req, res) => {
+  const { nickname } = req.params;
+  const system = DataContext.INSTANCE.entity("system").findByNickname(nickname);
+  if (!system) {
+    res.status(404).send("Not found");
+    return;
+  }
+  res.json({
+    ...system,
+    infocard: convertXmlToHtml(system.infocard),
+  });
+});
+
+router.get("/search", async (req, res) => {
   const objects = DataContext.INSTANCE.entity("object").findAll();
   const bases = DataContext.INSTANCE.entity("base").findAll();
   const zones = DataContext.INSTANCE.entity("zone").findAll();

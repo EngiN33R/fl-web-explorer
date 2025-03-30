@@ -9,7 +9,7 @@ const textureOpts: Record<string, Record<string, unknown>> = {
   navmap: { vFlip: true },
 };
 
-router.get("/:id", async (req, res) => {
+router.get("/texture/:id", async (req, res) => {
   const { id } = req.params;
   const data = DataContext.INSTANCE.binary(id);
   if (!data) {

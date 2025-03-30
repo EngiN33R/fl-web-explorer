@@ -1,9 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { DataContext } from "fl-node-orm";
-import system from "./routers/system.router";
-import texture from "./routers/texture.router";
-import search from "./routers/search.router";
+import navigation from "./routers/navigation.router";
+import assets from "./routers/assets.router";
 import { readFile } from "fs/promises";
 import { initializeImageMagick } from "@imagemagick/magick-wasm";
 
@@ -18,9 +17,8 @@ app.get("/", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/system", system);
-app.use("/texture", texture);
-app.use("/search", search);
+app.use("/nav", navigation);
+app.use("/assets", assets);
 
 async function bootstrap() {
   await DataContext.load(process.env.FL_ROOT as string);

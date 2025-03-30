@@ -20,7 +20,9 @@ export function SearchBox() {
           clearTimeout(timeout);
         }
         timeout = setTimeout(async () => {
-          const response = await fetch(`http://localhost:3000/search?q=${q}`);
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/nav/search?q=${q}`
+          );
 
           if (!response.ok) {
             reject(new Error(`HTTP error ${response.status}`));

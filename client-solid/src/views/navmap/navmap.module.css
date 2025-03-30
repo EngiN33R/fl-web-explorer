@@ -49,7 +49,6 @@
     aspect-ratio: auto 1 / 1;
 
     &.universe {
-      background-image: url("http://localhost:3000/texture/navmap");
       background-size: cover;
     }
 

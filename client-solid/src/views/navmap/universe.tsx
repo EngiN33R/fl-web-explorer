@@ -99,11 +99,19 @@ export function UniverseMap() {
   });
 
   return (
-    <div id="navmap-container" class={sx.navmapContainer}>
-      <div id="navmap-root" class={`${sx.navmapRoot} ${sx.universe}`}>
+    <article id="navmap-container" class={sx.navmapContainer}>
+      <div
+        id="navmap-root"
+        class={`${sx.navmapRoot} ${sx.universe}`}
+        style={{
+          "background-image": `url(${
+            import.meta.env.VITE_API_URL
+          }/assets/texture/navmap)`,
+        }}
+      >
         <For each={connections()}>{(data) => <Connection data={data} />}</For>
         <For each={universe() ?? []}>{(data) => <Node data={data} />}</For>
       </div>
-    </div>
+    </article>
   );
 }

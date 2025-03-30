@@ -8,6 +8,7 @@ import "solid-devtools";
 import "./index.css";
 import { MainLayout } from "./layouts/main";
 import { NavMapView } from "./views/navmap";
+import { LoadoutsView } from "./views/loadouts";
 
 const root = document.getElementById("root");
 
@@ -22,6 +23,7 @@ render(
     // <SwrProvider value={{ store: new Store(createCache(new LRU())) }}>
     <Router root={MainLayout}>
       <Route path="/navmap" component={NavMapView} />
+      <Route path="/loadouts" component={LoadoutsView} />
       <Route path="*" component={() => <Navigate href="/navmap" />} />
     </Router>
     // </SwrProvider>
