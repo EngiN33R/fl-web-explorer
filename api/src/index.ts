@@ -3,6 +3,7 @@ import cors from "cors";
 import { DataContext } from "fl-node-orm";
 import navigation from "./routers/navigation.router";
 import assets from "./routers/assets.router";
+import equipment from "./routers/equipment.router";
 import { readFile } from "fs/promises";
 import { initializeImageMagick } from "@imagemagick/magick-wasm";
 
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/nav", navigation);
+app.use("/equip", equipment);
 app.use("/assets", assets);
 
 async function bootstrap() {
