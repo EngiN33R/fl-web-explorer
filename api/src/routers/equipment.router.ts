@@ -6,10 +6,6 @@ const ship = DataContext.INSTANCE.entity("ship");
 
 const router = Router();
 
-router.get("/:id", (req, res) => {
-  res.json(equipment.findByNickname(req.params.id));
-});
-
 router.get("/search", async (req, res) => {
   const search = (req.query.q as string).toLowerCase();
   const { kind, hardpoint, soldBy, soldIn, soldAt } = req.query as Record<
@@ -83,11 +79,19 @@ router.get("/search", async (req, res) => {
 });
 
 router.get("/ship", (req, res) => {
-  res.json(ship.findAll());
+  const ships = ship.findAll();
+  const available = ships.filter(
+    (s) => DataContext.INSTANCE.market.getSoldAt(s.nickname).length > 0
+  );
+  res.json(available);
 });
 
 router.get("/ship/:id", (req, res) => {
   res.json(ship.findByNickname(req.params.id));
+});
+
+router.get("/:id", (req, res) => {
+  res.json(equipment.findByNickname(req.params.id));
 });
 
 export default router;
