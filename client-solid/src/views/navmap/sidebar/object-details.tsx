@@ -52,12 +52,12 @@ export function ObjectDetails() {
     const r = result();
 
     if (!r) {
-      return { icon: <Unknown />, summary: "Unknown", faction: "Unknown" };
+      return { icon: <Unknown />, summary: "Unknown", faction: "" };
     }
 
     let icon = <Unknown />;
     let summary = `Unknown (${r.archetype})`;
-    let faction = result.faction?.name ?? "";
+    let faction = r.faction?.name ?? "";
     if (type() === "system") {
       icon = <System />;
       summary = `System`;
