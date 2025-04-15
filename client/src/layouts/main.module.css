@@ -1,0 +1,55 @@
+.root {
+  display: flex;
+  height: 100vh;
+  position: relative;
+}
+
+.content {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  margin-right: 100px;
+}
+
+.navigation {
+  width: 100px;
+  height: 100%;
+  background-color: #242424;
+  position: absolute;
+  right: 0;
+  top: 0;
+  box-shadow: -15px 0px 25px -15px #000000aa;
+}
+
+.navigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navigation li.disabled {
+  opacity: 0.5;
+}
+
+.navigation li.disabled a {
+  cursor: not-allowed;
+}
+
+.navigation li:not(.disabled):not(:has(> a.active)):hover {
+  background-color: #08f5;
+}
+
+.navigation a {
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+}
+
+.navigation a.active {
+  background-color: #0006;
+  cursor: default;
+}

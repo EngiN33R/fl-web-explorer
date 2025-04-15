@@ -1,0 +1,9 @@
+packages:
+  - api
+  - client
+
+onlyBuiltDependencies:
+  - esbuild
+
+overrides:
+  fl-node-orm: link:../fl-node-orm

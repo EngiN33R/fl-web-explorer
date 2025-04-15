@@ -1,5 +1,6 @@
 import { DataContext, IBase, IObject, ISystem, IZone } from "fl-node-orm";
 import { convertXmlToHtml } from "./rdl";
+import { IniLoadout } from "fl-node-orm/dist/ini-types";
 
 export const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
@@ -59,6 +60,26 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
   } else if (body.infocard.includes("<RDL>")) {
     infocard = convertXmlToHtml(body.infocard);
   }
+  let loadout;
+  if ("loadout" in body && body.loadout) {
+    const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
+      "loadouts"
+    )?.findByNickname("loadout", body.loadout);
+    loadout = {
+      equipment: iniLoadout
+        ?.asArray("equip", true)
+        .map(([nickname, hardpoint]) => ({
+          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
+          hardpoint,
+        })),
+      cargo: iniLoadout
+        ?.asArray("cargo", true)
+        .map(([nickname, count]) => ({
+          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
+          count,
+        })),
+    };
+  }
 
   return {
     ...body,
@@ -70,5 +91,6 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
           name: faction.name,
         }
       : undefined,
+    loadout,
   };
 };

@@ -1,0 +1,9 @@
+{
+  "packageManager": "pnpm@10.8.0",
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "dependencies": {
+    "fl-node-orm": "link:../fl-node-orm"
+  }
+}

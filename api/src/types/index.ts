@@ -1,4 +1,12 @@
-import type { Bitmask, IBase, IObject, ISystem, IZone } from "fl-node-orm";
+import type {
+  Bitmask,
+  IBase,
+  IEquipment,
+  IObject,
+  IShip,
+  ISystem,
+  IZone,
+} from "fl-node-orm";
 
 type BitmaskJSON<B extends Bitmask<string> | undefined> =
   NonNullable<B> extends Bitmask<infer T> ? Array<T> : Array<unknown>;
@@ -11,6 +19,16 @@ export type IZoneRes = Omit<IZone, "visit" | "properties"> & {
 export type IObjectRes = Omit<IObject, "visit" | "properties"> & {
   visit?: BitmaskJSON<IZone["visit"]>;
   properties?: BitmaskJSON<IZone["properties"]>;
+  loadout?: {
+    equipment: {
+      equipment: IEquipment;
+      hardpoint: string;
+    }[];
+    cargo: {
+      equipment: IEquipment;
+      count: number;
+    }[];
+  };
 };
 
 export type IBaseRes = Omit<IBase, "visit"> & {
@@ -30,4 +48,12 @@ export type ISystemRes = Omit<
 export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
   system: ISystemRes;
   relevance: number;
+};
+
+export type IMarketOfferRes = {
+  equipment: IEquipment | IShip;
+  price: number;
+  basePrice: number;
+  sold: boolean;
+  rep: number;
 };

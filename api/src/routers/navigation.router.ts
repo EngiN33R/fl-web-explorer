@@ -7,10 +7,8 @@ const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
   "wplatform",
-  "space_tank",
   "dock_ring",
   "docking_fixture",
-  /depot_.+/,
   "track_ring",
 ];
 
@@ -64,11 +62,14 @@ router.get("/search", async (req, res) => {
     ]);
     return;
   }
-  exact = eligible.find((e) => e.nickname === search);
+  exact =
+    DataContext.INSTANCE.findByNickname("base", search) ||
+    DataContext.INSTANCE.findByNickname("object", search) ||
+    DataContext.INSTANCE.findByNickname("zone", search);
   if (exact) {
     res.json([
       {
-        ...exact,
+        ...serializeObject(exact),
         relevance: 1000,
       },
     ]);
