@@ -10,8 +10,9 @@ function EquipmentCard({
   count: number;
 }) {
   return (
-    <div className={sx.marketCard}>
+    <div className={sx.itemCard}>
       <img
+        className={sx.icon}
         src={`${import.meta.env.VITE_API_URL}/assets/icon/market/${
           equipment.nickname
         }`}

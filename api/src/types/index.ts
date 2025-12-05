@@ -2,6 +2,7 @@ import type {
   Bitmask,
   IBase,
   IEquipment,
+  IFaction,
   IObject,
   IShip,
   ISystem,
@@ -47,6 +48,33 @@ export type ISystemRes = Omit<
 
 export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
   system: ISystemRes;
+  missions: Array<{
+    faction: IFaction;
+    difficulty: [number, number];
+    reward: [number, number];
+  }>;
+  npcs: Array<{
+    faction: IFaction;
+    nickname: string;
+    name: string;
+    text: string;
+    rumors: Array<{
+      rumor: string;
+      reputation: number;
+      objects: (IZoneRes | IObjectRes | IBaseRes)[];
+    }>;
+    knowledge: Array<{
+      object: IZoneRes | IObjectRes | IBaseRes;
+      text: string;
+      reputation: number;
+      price: number;
+    }>;
+    missions: Array<{
+      faction: IFaction;
+      difficulty: [number, number];
+      reward: [number, number];
+    }>;
+  }>;
   relevance: number;
 };
 

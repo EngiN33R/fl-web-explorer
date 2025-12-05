@@ -10,8 +10,9 @@ function EquipmentCard({ loot }: { loot: NonNullable<IZoneRes["loot"]> }) {
       : `${sx.average} ${sx.side}`;
 
   return (
-    <div className={sx.marketCard}>
+    <div className={sx.itemCard}>
       <img
+        className={sx.icon}
         src={`${import.meta.env.VITE_API_URL}/assets/icon/market/${
           loot.equipment.nickname
         }`}

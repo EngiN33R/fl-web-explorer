@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
-import { serializeObject, serializeSystem } from "../util/common";
+import { fetchBarData, serializeObject, serializeSystem } from "../util/common";
 import { convertXmlToHtml } from "../util/rdl";
 
 const IGNORED_ARCHETYPES = [
@@ -70,6 +70,7 @@ router.get("/search", async (req, res) => {
     res.json([
       {
         ...serializeObject(exact),
+        ...fetchBarData(exact),
         relevance: 1000,
       },
     ]);
