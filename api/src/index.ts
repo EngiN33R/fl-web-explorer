@@ -5,6 +5,7 @@ import navigation from "./routers/navigation.router";
 import assets from "./routers/assets.router";
 import equipment from "./routers/equipment.router";
 import economy from "./routers/economy.router";
+import ai from "./routers/ai.router";
 import { readFile } from "fs/promises";
 import { initializeImageMagick } from "@imagemagick/magick-wasm";
 
@@ -23,7 +24,7 @@ app.use("/nav", navigation);
 app.use("/equip", equipment);
 app.use("/assets", assets);
 app.use("/economy", economy);
-
+app.use("/ai", ai);
 async function bootstrap() {
   await DataContext.load(process.env.FL_ROOT as string);
   const imWasmBytes = await readFile(
