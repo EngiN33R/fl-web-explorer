@@ -6,21 +6,21 @@ function EquipmentCard({ loot }: { loot: NonNullable<IZoneRes["loot"]> }) {
     loot.difficulty > 10
       ? `${sx.negative} ${sx.up}`
       : loot.difficulty < 5
-      ? `${sx.positive} ${sx.down}`
-      : `${sx.average} ${sx.side}`;
+        ? `${sx.positive} ${sx.down}`
+        : `${sx.average} ${sx.side}`;
 
   return (
     <div className={sx.itemCard}>
       <img
         className={sx.icon}
         src={`${import.meta.env.VITE_API_URL}/assets/icon/market/${
-          loot.equipment.nickname
+          loot.equipment?.nickname
         }`}
         alt=""
       />
       <div>
         <span className={sx.name}>
-          {loot.count[0]}-{loot.count[1]}x {loot.equipment.name}
+          {loot.count[0]}-{loot.count[1]}x {loot.equipment?.name}
         </span>
         <span className={sx.price}>
           Difficulty:&nbsp;

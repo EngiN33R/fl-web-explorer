@@ -48,6 +48,7 @@ export const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
   "wplatform",
+  "small_wplatform",
   "space_tank",
   "dock_ring",
   "docking_fixture",
@@ -217,6 +218,31 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
         count,
       })),
     };
+  }
+  if ("archetype" in body && body.archetype?.includes("depot_")) {
+    const loadoutKey = DataContext.INSTANCE.ini("solars")
+      ?.findByNickname("solar", body.archetype)
+      ?.get("loadout") as string;
+    if (loadoutKey) {
+      const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
+        "loadouts"
+      )?.findByNickname("loadout", loadoutKey);
+      loadout = {
+        equipment: iniLoadout
+          ?.asArray("equip", true)
+          .map(([nickname, hardpoint]) => ({
+            equipment: DataContext.INSTANCE.findByNickname(
+              "equipment",
+              nickname
+            ),
+            hardpoint,
+          })),
+        cargo: iniLoadout?.asArray("cargo", true).map(([nickname, count]) => ({
+          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
+          count,
+        })),
+      };
+    }
   }
 
   return {

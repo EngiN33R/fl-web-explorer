@@ -7,6 +7,7 @@ const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
   "wplatform",
+  "small_wplatform",
   "dock_ring",
   "docking_fixture",
   "track_ring",

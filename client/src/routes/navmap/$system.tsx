@@ -4,8 +4,8 @@ import {
   useTransformState,
 } from "@/data/context/navmap";
 import { IBaseRes, IObjectRes, ISystemRes, IZoneRes } from "@api/types";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CSSProperties } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { CSSProperties, useRef } from "react";
 import { z } from "zod";
 import styles from "./navmap.module.css";
 import { RiMapPin2Fill } from "react-icons/ri";
@@ -114,6 +114,9 @@ function TradeLane({
 }
 
 function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
+  const router = useRouter();
+  const { data: selectedObject } = useObjectData(system);
+
   const size = system.size ?? 1;
 
   const [relX, , relY] = useRelPos(data.position, size);
@@ -162,9 +165,15 @@ function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
     style.opacity = 0.4;
   }
   style.zIndex = zIndex;
+  if (selectedObject?.nickname === data.nickname) {
+    style.outline = "2px solid #f70";
+  }
+
+  const downRef = useRef(false);
+  const movingDelta = useRef(0);
 
   return (
-    <Link
+    <div
       className={styles.zone}
       style={style}
       data-nickname={data.nickname}
@@ -173,9 +182,25 @@ function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
         data.loot ? ",LOOTABLE" : ""
       }`}
       title={`${data.name} (${data.nickname})`}
-      to="/navmap/$system"
-      params={{ system: system.nickname }}
-      search={{ nickname: data.nickname }}
+      onPointerDown={() => {
+        downRef.current = true;
+      }}
+      onPointerMove={(e) => {
+        if (downRef.current) {
+          movingDelta.current += e.movementX + e.movementY;
+        }
+      }}
+      onPointerUp={() => {
+        if (downRef.current && !movingDelta.current) {
+          router.navigate({
+            to: "/navmap/$system",
+            params: { system: system.nickname },
+            search: { nickname: data.nickname },
+          });
+        }
+        movingDelta.current = 0;
+        downRef.current = false;
+      }}
     />
   );
 }
@@ -190,6 +215,8 @@ export const Route = createFileRoute("/navmap/$system")({
 function SectorMarkers() {
   const { scale, pan } = useTransformState();
 
+  const opacity = 1 / (scale || 1);
+
   return (
     <>
       {Array.from({ length: 8 }).map((_, idx) => {
@@ -200,6 +227,7 @@ function SectorMarkers() {
             style={{
               left: `${6 + 12.5 * idx}%`,
               top: `${Math.max(-pan.y / scale + 5, 5)}px`,
+              opacity,
             }}
           >
             {String.fromCodePoint(65 + idx)}
@@ -214,6 +242,7 @@ function SectorMarkers() {
             style={{
               top: `${6 + 12.5 * idx}%`,
               left: `${Math.max(-pan.x / scale + 10, 10)}px`,
+              opacity,
             }}
           >
             {idx + 1}
@@ -265,9 +294,11 @@ function RouteComponent() {
             system={system}
           />
         ))}
-        {system?.zones?.filter(zoneFilter).map((data) => (
-          <Zone key={data.nickname} data={data} system={system} />
-        ))}
+        {system?.zones
+          ?.filter(zoneFilter)
+          .map((data) => (
+            <Zone key={data.nickname} data={data} system={system} />
+          ))}
         {system?.bases?.map((data) => (
           <Node
             key={`${data.nickname}-${data.position.join(",")}`}
@@ -275,17 +306,19 @@ function RouteComponent() {
             system={system}
           />
         ))}
-        {system?.objects?.filter(objectFilter).map((data) => (
-          <Node
-            key={`${data.nickname}-${data.position.join(",")}`}
-            data={data}
-            system={system}
-          />
-        ))}
+        {system?.objects
+          ?.filter(objectFilter)
+          .map((data) => (
+            <Node
+              key={`${data.nickname}-${data.position.join(",")}`}
+              data={data}
+              system={system}
+            />
+          ))}
         <SectorMarkers />
         <Pin
           position={
-            object && object.type !== "system"
+            object && object.type !== "system" && object.type !== "zone"
               ? toRelPos<[number, number, number]>(
                   object?.position ?? [0, 0, 0],
                   system?.size ?? 1

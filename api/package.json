@@ -2,7 +2,7 @@
   "name": "fl-web-explorer-api",
   "scripts": {
     "start:dev": "node --env-file .env --watch --enable-source-maps ./dist/index.js",
-    "dev": "concurrently --kill-others \"nodemon --watch \"src/**\" -e ts --ignore \"src/**/*.spec.ts\" --exec npm run build\" \"npm run start:dev\"",
+    "dev": "concurrently --kill-others 'nodemon --watch \"src/**\" -e ts --ignore \"src/**/*.spec.ts\" --exec npm run build' \"npm run start:dev\"",
     "build": "tsc"
   },
   "dependencies": {

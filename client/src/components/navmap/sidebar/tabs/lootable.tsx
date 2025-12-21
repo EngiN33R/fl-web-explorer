@@ -32,9 +32,9 @@ export function LootableTabs({ data }: { data: IObjectRes }) {
     <div className={sx.dynamic}>
       <p dangerouslySetInnerHTML={{ __html: data.infocard }} />
       <h3>Loot</h3>
-      {data.loadout?.cargo.map((e) => (
+      {data.loadout?.cargo.map((e, idx) => (
         <EquipmentCard
-          key={e.equipment.nickname}
+          key={`${idx}-${e.equipment.nickname}-${e.count}`}
           equipment={e.equipment}
           count={e.count}
         />

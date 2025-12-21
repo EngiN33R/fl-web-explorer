@@ -39,7 +39,10 @@ export function ObjectDetails({ data }: { data: any }) {
       return "jump";
     } else if (
       data.archetype?.includes("surprise") ||
-      data.archetype?.includes("suprise")
+      data.archetype?.includes("suprise") ||
+      ((data.archetype?.includes("depot_") ||
+        data.archetype?.includes("space_industrial")) &&
+        data.loadout?.cargo.length)
     ) {
       return "wreck";
     } else if (data.type === "base") {
@@ -105,7 +108,10 @@ export function ObjectDetails({ data }: { data: any }) {
     } else if (data.archetype?.includes("sun")) {
       icon = <Star />;
       summary = "Star";
-    } else if (data.archetype?.includes("mineable")) {
+    } else if (
+      data.archetype?.includes("mineable") &&
+      !data.archetype?.includes("wplatform")
+    ) {
       icon = <Mining />;
       summary = "Mineable Resource";
     }
