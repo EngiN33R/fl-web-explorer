@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
+import { deepParseInfocards } from "../util/common";
 
 const equipment = DataContext.INSTANCE.entity("equipment");
 const ship = DataContext.INSTANCE.entity("ship");
@@ -7,13 +8,11 @@ const ship = DataContext.INSTANCE.entity("ship");
 const router = Router();
 
 router.get("/search", async (req, res) => {
-  const search = (req.query.q as string).toLowerCase();
-  const { kind, hardpoint, soldBy, soldIn, soldAt } = req.query as Record<
-    string,
-    string
-  >;
+  const search = (req.query.q as string)?.toLowerCase() ?? "";
+  const { kind, hardpoint, soldBy, soldIn, soldAt, limit } =
+    req.query as Record<string, string>;
 
-  const exact = equipment.findByNickname(search);
+  const exact = search ? equipment.findAll() : equipment.findByNickname(search);
   if (exact) {
     res.json([
       {
@@ -25,7 +24,7 @@ router.get("/search", async (req, res) => {
   }
 
   const eligible = equipment.findAll((e) => {
-    if (!e.nickname) {
+    if (!e.nickname || e.nickname.includes("_rtc")) {
       return false;
     }
     if (kind && e.kind !== kind) {
@@ -63,23 +62,25 @@ router.get("/search", async (req, res) => {
       .reduce((a, b) => a + b, 0),
   ]);
 
-  res.json(
-    relevance
-      .filter((r) => r[1])
-      .sort((a, b) => b[1] - a[1])
-      .map((r) => {
-        const body = eligible[r[0]];
-        return {
-          ...body,
-          relevance: r[1],
-        };
-      })
-      .slice(0, 50)
-  );
+  let result = relevance
+    .filter((r) => r[1])
+    .sort((a, b) => b[1] - a[1])
+    .map((r) => {
+      const body = eligible[r[0]];
+      return deepParseInfocards({
+        ...body,
+        relevance: r[1],
+      });
+    });
+  if (limit !== "0") {
+    result = result.slice(0, Number(limit || "50"));
+  }
+  res.json(result);
 });
 
 router.get("/ship", (req, res) => {
   const ships = ship.findAll();
+  // console.log(ships.filter((s) => s.name.toLowerCase().includes("falcon")));
   const available = ships.filter(
     (s) => DataContext.INSTANCE.market.getSoldAt(s.nickname).length > 0
   );

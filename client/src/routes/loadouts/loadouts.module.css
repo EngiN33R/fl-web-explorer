@@ -2,4 +2,139 @@
   height: 100%;
   flex: 1;
   background-color: #242424;
+  position: relative;
+
+  .equipment {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .hardpoint {
+      border: 1px solid #444444;
+      &:hover {
+        border-color: #dadada;
+      }
+      &.active {
+        border-color: #ffffff;
+      }
+
+      & > button {
+        background: none;
+        border: none;
+        padding: 4px;
+        margin: 0;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-size: 100%;
+
+        .name {
+          /* height: 32px; */
+        }
+
+        .caption {
+          font-size: 80%;
+        }
+      }
+    }
+  }
+
+  .drawer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 500px;
+    background-color: #2f2f2f;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .close {
+      position: absolute;
+      top: 0;
+      left: -32px;
+      border: none;
+      background: #2f2f2f;
+      font-size: 160%;
+      padding: 0;
+      margin: 0;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover::after {
+        color: #f66;
+      }
+
+      &::after {
+        position: absolute;
+        content: "×";
+        top: -1px;
+      }
+    }
+
+    .detail {
+      height: 300px;
+      padding: 8px;
+      overflow-y: auto;
+      border-bottom: 1px solid #444444;
+
+      .name {
+        font-size: 130%;
+        font-weight: 600;
+      }
+    }
+
+    .search {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      input[type="search"] {
+        width: 100%;
+        padding: 8px 4px 8px 12px;
+        border: none;
+        background: #2f2f2f;
+        color: #ffffff;
+        flex-shrink: 0;
+      }
+
+      .list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+
+        button {
+          background: none;
+          border: none;
+          padding: 4px 4px 4px 12px;
+          margin: 0;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+
+          &.active {
+            background: #08f5;
+          }
+
+          &:hover {
+            background: #08f5;
+          }
+        }
+      }
+    }
+  }
 }

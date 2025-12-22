@@ -258,3 +258,27 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
     loadout,
   };
 };
+
+export const deepParseInfocards = <T extends Record<string, any>>(
+  obj: T
+): T => {
+  const result = { ...obj };
+  for (const key in result) {
+    if (typeof result[key] === "string" && result[key].includes("<RDL>")) {
+      result[key] = convertXmlToHtml(obj[key]) as T[Extract<keyof T, string>];
+    } else if (typeof obj[key] === "object") {
+      if (Array.isArray(obj[key])) {
+        result[key] = obj[key].map((item: any) =>
+          typeof item === "string" && item.includes("<RDL>")
+            ? convertXmlToHtml(item)
+            : typeof item === "object"
+              ? deepParseInfocards(item)
+              : item
+        );
+      } else {
+        result[key] = deepParseInfocards(obj[key]);
+      }
+    }
+  }
+  return result;
+};
