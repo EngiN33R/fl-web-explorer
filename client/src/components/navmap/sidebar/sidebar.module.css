@@ -29,13 +29,6 @@
     input[type="search"] {
       width: 100%;
     }
-
-    .results {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 2px);
-    }
   }
 
   .back {
@@ -228,51 +221,73 @@
   }
 
   .path {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+
     .points {
       position: relative;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      margin-bottom: 12px;
+
+      .from,
+      .to {
+        width: 90%;
+      }
 
       .swap {
         position: absolute;
-        top: 0;
+        top: calc(50% - 16px);
+        right: 0;
+        width: 32px;
+        height: 32px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 100%;
+
+        &:hover {
+          background-color: #08f2;
+        }
       }
     }
-  }
 
-  .waypoints {
-    height: 300px;
-    overflow-y: auto;
+    .waypoints {
+      flex: 1;
+      overflow-y: auto;
 
-    .list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+      .list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
 
-      li {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px;
-        border-bottom: 1px solid #363636;
-
-        .label {
-          flex: 1;
-        }
-
-        .icon {
-          stroke: rgba(255, 255, 255, 0.5);
-          color: rgba(255, 255, 255, 0.5);
-          width: 24px;
-          height: 24px;
+        li {
           display: flex;
           align-items: center;
-          justify-content: center;
+          gap: 8px;
+          padding: 8px;
+          border-bottom: 1px solid #363636;
 
-          svg {
-            width: 100%;
-            height: 100%;
+          .label {
+            flex: 1;
+          }
+
+          .icon {
+            stroke: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.5);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            svg {
+              width: 100%;
+              height: 100%;
+            }
           }
         }
       }
@@ -281,6 +296,8 @@
 }
 
 .search {
+  position: relative;
+
   &.floating {
     position: absolute;
     /* left: calc(100% + 16px + 12px); */
@@ -343,6 +360,11 @@
   }
 
   .results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 38px;
+    z-index: 2;
     max-height: 300px;
     overflow-y: auto;
     margin-top: 8px;

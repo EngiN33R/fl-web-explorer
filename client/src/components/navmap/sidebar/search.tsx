@@ -14,6 +14,8 @@ export function SearchBox({
   query: queryValue,
   onQueryChange,
   onClickResult,
+  placeholder,
+  searchDisabled,
 }: {
   className?: string;
   onDetailedSearch?: (query: string) => unknown;
@@ -22,6 +24,8 @@ export function SearchBox({
   query?: string;
   onQueryChange?: (query: string) => unknown;
   onClickResult?: (result: ISearchResult) => unknown;
+  placeholder?: string;
+  searchDisabled?: boolean;
 }) {
   const { mode, object } = useNavMapContext();
 
@@ -65,15 +69,17 @@ export function SearchBox({
       <div className={sx.inner}>
         <input
           type="search"
-          placeholder="Search..."
+          placeholder={placeholder ?? "Search..."}
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
-            if (e.target.value.length > 1) {
-              setExpanded(true);
-            } else {
-              setExpanded(false);
+            if (e.target.value !== query) {
+              if (e.target.value.length > 1) {
+                setExpanded(true);
+              } else {
+                setExpanded(false);
+              }
             }
+            setQuery(e.target.value);
           }}
           onKeyUp={(e) => {
             if (e.key === "Enter") {
@@ -96,7 +102,7 @@ export function SearchBox({
             <Search />
           </button>
         )}
-        {!!onClear && (object || query || mode === "search") && (
+        {!!onClear && (object || query || mode !== "object") && (
           <button
             className={sx.action}
             onClick={() => {
@@ -109,10 +115,10 @@ export function SearchBox({
         )}
         {typeof extra === "function" ? extra(query) : extra}
       </div>
-      {expanded && searchResult?.length !== 0 && (
+      {!searchDisabled && expanded && searchResult?.length !== 0 && (
         <ul className={sx.results}>
           {searchResult?.map((e: ISearchResult) => (
-            <li data-relevance={e.relevance}>
+            <li key={e.nickname} data-relevance={e.relevance}>
               <button
                 className={sx.result}
                 onClick={() => {

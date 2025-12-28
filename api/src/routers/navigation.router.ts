@@ -126,13 +126,16 @@ router.get("/path", async (req, res) => {
   const { from, to } = req.query as { from: string; to: string };
   const fromLocation =
     DataContext.INSTANCE.findByNickname("object", from) ||
-    DataContext.INSTANCE.findByNickname("base", from);
+    DataContext.INSTANCE.entity("base").findFirst(
+      (e) => e.objectNickname === from
+    );
   const toLocation =
     DataContext.INSTANCE.findByNickname("object", to) ||
     DataContext.INSTANCE.entity("base").findFirst(
       (e) => e.objectNickname === to
     );
   if (!fromLocation || !toLocation) {
+    console.warn(from, to, fromLocation, toLocation);
     res.status(404).send("Not found");
     return;
   }

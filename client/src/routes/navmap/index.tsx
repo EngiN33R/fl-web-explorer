@@ -30,7 +30,7 @@ function Node(props: { data: ISystemRes }) {
           transform: `translateX(-50%) scale(${1 / scale})`,
         }}
       >
-        <i className={sx.icon} />
+        <i className={sx.icon} style={{ backgroundColor: "#fff" }} />
         <span className={sx.label}>{props.data.name}</span>
       </button>
     </Link>

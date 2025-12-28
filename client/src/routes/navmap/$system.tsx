@@ -77,6 +77,7 @@ function Node({
       to="/navmap/$system"
       params={{ system: system.nickname }}
       search={{ nickname: data.nickname }}
+      state={(state) => ({ ...state })}
       data-nickname={data.nickname}
       data-type="object"
       data-archetype={data.archetype}
@@ -107,6 +108,7 @@ function TradeLane({
   data: TradeLaneObject;
   system: ISystemRes;
 }) {
+  const { scale } = useTransformState();
   const size = system.size ?? 1;
   const lineStyle = useLineStyle(data.startPosition, data.endPosition, size);
 
@@ -117,6 +119,7 @@ function TradeLane({
         ...lineStyle,
         borderColor: "#08f",
         color: "#08f",
+        borderWidth: 2 / scale,
       }}
     />
   );
@@ -129,6 +132,7 @@ function NavSegment({
   data: IWaypointRes;
   system?: ISystemRes;
 }) {
+  const { scale } = useTransformState();
   const size = system?.size ?? 1;
   const lineStyle = useLineStyle(data.from.position, data.to.position, size);
 
@@ -139,9 +143,34 @@ function NavSegment({
         ...lineStyle,
         borderColor: "#f0f",
         color: "#f0f",
-        borderWidth: 2,
+        borderWidth: 2 / scale,
       }}
     />
+  );
+}
+
+function NavPoint({
+  position,
+  system,
+}: {
+  position: [number, number, number];
+  system?: ISystemRes;
+}) {
+  const { scale } = useTransformState();
+  const size = system?.size ?? 1;
+  const [relX, , relY] = useRelPos(position, size);
+
+  return (
+    <div
+      className={styles.node}
+      style={{
+        left: `${relX}%`,
+        top: `${relY}%`,
+        transform: `translateX(-50%) scale(${1 / (scale * 2)})`,
+      }}
+    >
+      <i className={styles.icon} style={{ backgroundColor: "#f0f" }} />
+    </div>
   );
 }
 
@@ -253,7 +282,9 @@ function SectorMarkers() {
   const showSidebar = mode !== "object" || (!!system && !!object);
 
   const x = -pan.x / scale;
-  const left = showSidebar ? Math.max(x + 410, 10) : Math.max(x + 10, 10);
+  const left = showSidebar
+    ? Math.max(x + 410 / scale, 10)
+    : Math.max(x + 10 / scale, 10);
 
   return (
     <>
@@ -514,17 +545,28 @@ function RouteComponent() {
           ?.filter(
             (w) => w.type !== "jump" && w.from.system === system?.nickname
           )
-          .map((data) => (
+          .flatMap((data) => [
             <NavSegment
               key={
+                "segment-" +
                 data.type +
                 data.from.position.join(",") +
                 data.to.position.join(",")
               }
               data={data}
               system={system}
-            />
-          ))}
+            />,
+            <NavPoint
+              key={`point-${data.from.position.join(",")}`}
+              position={data.from.position}
+              system={system}
+            />,
+            <NavPoint
+              key={`point-${data.to.position.join(",")}`}
+              position={data.to.position}
+              system={system}
+            />,
+          ])}
         <SectorMarkers />
         <Pin
           position={

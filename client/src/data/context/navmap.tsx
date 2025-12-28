@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useTransformEffect } from "react-zoom-pan-pinch";
 import {
   IBaseRes,
@@ -23,14 +23,16 @@ import {
   Unknown,
 } from "@/components/icons";
 
+type NavMapMode = "object" | "search" | "path";
+
 interface INavMapContext {
   system?: ISystemRes;
   object?: ISearchResult;
   waypoints?: IWaypointRes[];
   searchResult?: ISearchResult[];
-  mode: "object" | "search" | "path";
-  setMode: (mode: "object" | "search" | "path") => void;
-  search: (query: string, mode?: "object" | "search" | "path") => void;
+  mode: NavMapMode;
+  setMode: (mode: NavMapMode) => void;
+  search: (query: string, mode?: NavMapMode) => void;
   findPath: (from: string, to: string) => void;
 }
 
@@ -80,10 +82,13 @@ export function NavMapProvider({ children }: { children: React.ReactNode }) {
   const { data: system } = useSystemData();
   const { data: object } = useObjectData();
 
-  // console.log(history.state);
+  console.log(history.state);
 
-  const mode = history.state?.navmapMode ?? "object";
-  const setMode = (mode: "object" | "search" | "path") => {
+  const [mode, setModeRaw] = useState<NavMapMode>(
+    history.state?.navmapMode ?? "object"
+  );
+  const setMode = (mode: NavMapMode) => {
+    setModeRaw(mode);
     history.pushState({ ...history.state, navmapMode: mode }, "");
   };
   const [from, setFrom] = useState<string | undefined>(undefined);
@@ -91,6 +96,10 @@ export function NavMapProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState<string | undefined>(
     history.state?.navmapSearchQuery
   );
+
+  useEffect(() => {
+    setModeRaw(history.state?.navmapMode ?? "object");
+  }, [history.state?.navmapMode]);
 
   const { data: waypoints } = useQuery({
     queryKey: ["path", from, to],
@@ -141,6 +150,7 @@ export function NavMapProvider({ children }: { children: React.ReactNode }) {
           history.pushState({ ...history.state, navmapMode: mode }, "");
         },
         search: (query, mode) => {
+          setModeRaw(mode ?? history.state?.navmapMode ?? "object");
           history.pushState(
             {
               ...history.state,

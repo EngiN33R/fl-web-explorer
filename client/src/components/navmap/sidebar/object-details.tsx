@@ -25,6 +25,7 @@ export function ObjectDetails({ data }: { data: ISearchResult }) {
               to="/navmap/$system"
               params={{ system: data?.goto?.system }}
               search={{ nickname: data?.goto?.object }}
+              state={(state) => ({ ...state })}
               data-nickname={data?.goto?.system}
               data-system={data?.goto?.system}
             >

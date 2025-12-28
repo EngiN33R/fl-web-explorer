@@ -1,7 +1,6 @@
 import sx from "./sidebar.module.css";
 import { ObjectDetails } from "./object-details";
 import { useNavMapContext } from "@/data/context/navmap";
-import { Waypoints } from "./waypoints";
 import { SearchBox, SearchDetails } from "./search";
 import { PathSection } from "./path";
 import { Navigate } from "@/components/icons";
@@ -9,8 +8,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 export function Sidebar() {
-  const { system, object, waypoints, mode, search, setMode } =
-    useNavMapContext();
+  const { system, object, mode, search, setMode } = useNavMapContext();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const navigate = useNavigate();
 
@@ -84,7 +82,6 @@ export function Sidebar() {
       {object && mode === "object" && <ObjectDetails data={object} />}
       {mode === "search" && <SearchDetails />}
       {mode === "path" && <PathSection />}
-      {!!waypoints?.length && <Waypoints waypoints={waypoints} />}
     </aside>
   );
 }
