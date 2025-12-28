@@ -1,14 +1,23 @@
 import {
-  useObjectData,
-  useSystemData,
+  toRelPos,
+  useLineStyle,
+  useRelPos,
+  useRelSize,
   useTransformState,
 } from "@/data/context/navmap";
-import { IBaseRes, IObjectRes, ISystemRes, IZoneRes } from "@api/types";
+import {
+  IBaseRes,
+  IObjectRes,
+  ISystemRes,
+  IWaypointRes,
+  IZoneRes,
+} from "@api/types";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { CSSProperties, useRef } from "react";
 import { z } from "zod";
 import styles from "./navmap.module.css";
 import { RiMapPin2Fill } from "react-icons/ri";
+import { useNavMapContext } from "@/components/navmap/context";
 
 interface TradeLaneObject {
   startPosition: [number, number, number];
@@ -20,18 +29,6 @@ export const IGNORED_ARCHETYPES = [
   "nav_buoy",
   "hazard_buoy",
 ];
-
-function toRelPos<T extends number[]>(pos: T, size: number) {
-  return pos.map((v) => 50 + (v / size) * 100) as T;
-}
-
-function useRelSize<T extends number[]>(pos: T, size: number) {
-  return pos.map((v) => (v / size) * 100) as T;
-}
-
-function useRelPos<T extends number[]>(pos: T, size: number) {
-  return toRelPos(pos, size) as T;
-}
 
 const objectFilter = (o: IObjectRes) =>
   !(
@@ -90,24 +87,37 @@ function TradeLane({
   system: ISystemRes;
 }) {
   const size = system.size ?? 1;
-
-  const [ox, oz, oy] = useRelPos(data.startPosition, size);
-  const [tx, tz, ty] = useRelPos(data.endPosition, size);
-  const length = Math.sqrt((ox - tx) ** 2 + (oy - ty) ** 2 + (oz - tz) ** 2);
-  const width = `${length}%`;
-  const rotation = Math.round((Math.atan2(ty - oy, tx - ox) * 180) / Math.PI);
-  const [relX, relY] = [(tx + ox) / 2, (ty + oy) / 2];
+  const lineStyle = useLineStyle(data.startPosition, data.endPosition, size);
 
   return (
     <div
       className={styles.connection}
       style={{
+        ...lineStyle,
         borderColor: "#08f",
         color: "#08f",
-        width,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-        left: `${relX}%`,
-        top: `${relY}%`,
+      }}
+    />
+  );
+}
+
+function NavSegment({
+  data,
+  system,
+}: {
+  data: IWaypointRes;
+  system?: ISystemRes;
+}) {
+  const size = system?.size ?? 1;
+  const lineStyle = useLineStyle(data.from.position, data.to.position, size);
+
+  return (
+    <div
+      className={styles.connection}
+      style={{
+        ...lineStyle,
+        borderColor: "#f0f",
+        color: "#f0f",
       }}
     />
   );
@@ -115,7 +125,7 @@ function TradeLane({
 
 function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
   const router = useRouter();
-  const { data: selectedObject } = useObjectData(system);
+  const { object: selectedObject } = useNavMapContext();
 
   const size = system.size ?? 1;
 
@@ -279,8 +289,7 @@ function Pin({ position }: { position?: [number, number, number] }) {
 }
 
 function RouteComponent() {
-  const { data: system } = useSystemData();
-  const { data: object } = useObjectData(system);
+  const { system, object, waypoints } = useNavMapContext();
 
   return (
     <article id="navmap-container" className={styles.navmapContainer}>
@@ -311,6 +320,21 @@ function RouteComponent() {
           .map((data) => (
             <Node
               key={`${data.nickname}-${data.position.join(",")}`}
+              data={data}
+              system={system}
+            />
+          ))}
+        {waypoints
+          ?.filter(
+            (w) => w.type !== "jump" && w.from.system === system?.nickname
+          )
+          .map((data) => (
+            <NavSegment
+              key={
+                data.type +
+                data.from.position.join(",") +
+                data.to.position.join(",")
+              }
               data={data}
               system={system}
             />

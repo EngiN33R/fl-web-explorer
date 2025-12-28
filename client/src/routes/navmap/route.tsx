@@ -11,6 +11,7 @@ import {
   ReactZoomPanPinchRef,
 } from "react-zoom-pan-pinch";
 import { SearchBox, Sidebar } from "@/components/navmap/sidebar";
+import { NavMapProvider } from "@/components/navmap/context";
 import styles from "./navmap.module.css";
 import { Galaxy } from "../../components/icons";
 
@@ -29,7 +30,7 @@ export function NavMapLayout() {
   }, [location.pathname]);
 
   return (
-    <>
+    <NavMapProvider>
       <Sidebar />
       <div className={styles.sizeContainer}>
         <SearchBox />
@@ -64,6 +65,6 @@ export function NavMapLayout() {
           </button>
         </Link>
       </div>
-    </>
+    </NavMapProvider>
   );
 }

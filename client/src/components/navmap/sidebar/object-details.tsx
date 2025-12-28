@@ -151,7 +151,7 @@ export function ObjectDetails({ data }: { data: any }) {
         <div className={sx.location}>
           {type === "system"
             ? data?.territory
-            : `${data?.system?.name ?? "Unknown"}, Sector A1`}
+            : `${data?.system?.name ?? "Unknown"}, Sector ${data?.sector}`}
         </div>
       </div>
       {type === "base" ? (

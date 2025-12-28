@@ -188,6 +188,55 @@ export const fetchBarData = (body: IBase) => {
   return bar;
 };
 
+export const calculateSector = (object: {
+  position: [number, number, number];
+  system: string;
+}) => {
+  const sectorsX = ["A", "B", "C", "D", "E", "F", "G", "H"];
+  const sectorsZ = ["1", "2", "3", "4", "5", "6", "7", "8"];
+
+  const [x, , z] = object.position;
+  const system = DataContext.INSTANCE.entity("system").findByNickname(
+    object.system
+  );
+  if (!system) {
+    return "N/A";
+  }
+  const sectorSize = system.size / 8;
+  const sectorX = x / sectorSize;
+  const sectorZ = z / sectorSize;
+
+  let horizontal: string;
+  if (
+    (sectorX % 1 < 0 && sectorX % 1 < -0.85) ||
+    (sectorX % 1 >= 0 && sectorX % 1 < 0.15)
+  ) {
+    horizontal = `${sectorsX[3 + Math.floor(sectorX)]}/${sectorsX[4 + Math.floor(sectorX)]}`;
+  } else if (
+    (sectorX % 1 > 0 && sectorX % 1 > 0.85) ||
+    (sectorX % 1 < 0 && sectorX % 1 > -0.15)
+  ) {
+    horizontal = `${sectorsX[4 + Math.floor(sectorX)]}/${sectorsX[5 + Math.floor(sectorX)]}`;
+  } else {
+    horizontal = sectorsX[4 + Math.floor(sectorX)];
+  }
+  let vertical: string;
+  if (
+    (sectorZ % 1 < 0 && sectorZ % 1 < -0.85) ||
+    (sectorZ % 1 >= 0 && sectorZ % 1 < 0.15)
+  ) {
+    vertical = `${sectorsZ[3 + Math.floor(sectorZ)]}/${sectorsZ[4 + Math.floor(sectorZ)]}`;
+  } else if (
+    (sectorZ % 1 > 0 && sectorZ % 1 > 0.85) ||
+    (sectorZ % 1 < 0 && sectorZ % 1 > -0.15)
+  ) {
+    vertical = `${sectorsZ[4 + Math.floor(sectorZ)]}/${sectorsZ[5 + Math.floor(sectorZ)]}`;
+  } else {
+    vertical = sectorsZ[4 + Math.floor(sectorZ)];
+  }
+  return `${horizontal}${vertical}`;
+};
+
 export const serializeObject = (body: IObject | IBase | IZone) => {
   const system = DataContext.INSTANCE.findByNickname("system", body.system);
   const faction =
@@ -248,13 +297,20 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
   return {
     ...body,
     infocard,
-    system,
+    system: system
+      ? {
+          nickname: system.nickname,
+          name: system.name,
+        }
+      : undefined,
     faction: faction
       ? {
           nickname: faction.nickname,
           name: faction.name,
         }
       : undefined,
+    objectNickname:
+      "objectNickname" in body ? body.objectNickname : body.nickname,
     loadout,
   };
 };

@@ -7,6 +7,7 @@ import type {
   IShip,
   ISystem,
   IZone,
+  NavigationWaypoint,
 } from "fl-node-orm";
 
 type BitmaskJSON<B extends Bitmask<string> | undefined> =
@@ -47,7 +48,12 @@ export type ISystemRes = Omit<
 };
 
 export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
-  system: ISystemRes;
+  objectNickname: string;
+  system: {
+    nickname: string;
+    name: string;
+  };
+  sector: string;
   missions: Array<{
     faction: IFaction;
     difficulty: [number, number];
@@ -84,4 +90,13 @@ export type IMarketOfferRes = {
   basePrice: number;
   sold: boolean;
   rep: number;
+};
+
+export type IWaypointRes = NavigationWaypoint & {
+  from: NavigationWaypoint["from"] & {
+    sector: string;
+  };
+  to: NavigationWaypoint["to"] & {
+    sector: string;
+  };
 };

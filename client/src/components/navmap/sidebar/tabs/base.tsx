@@ -6,6 +6,7 @@ import { GiTargetShot } from "react-icons/gi";
 import { IoMap, IoPerson } from "react-icons/io5";
 import { transform } from "lodash";
 import { IFaction } from "fl-node-orm";
+import { credits } from "@/util";
 
 type IRumor = {
   rumor: string;
@@ -13,13 +14,6 @@ type IRumor = {
   objects: ISearchResult["npcs"][number]["rumors"][number]["objects"];
   npcs: ISearchResult["npcs"][number][];
 };
-
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  currencyDisplay: "symbol",
-  maximumFractionDigits: 0,
-});
 
 const missionDifficulties: Record<number, string> = {
   "0": "Trivial",
@@ -63,21 +57,21 @@ function MarketCard({ offer }: { offer: IMarketOfferRes }) {
         </span>
         <div className={sx.details}>
           <span className={sx.price}>
-            {moneyFormatter.format(offer.price)}
+            {credits(offer.price)}
             {isCommodity && (
               <span
                 className={`${sx.indicator} ${
                   priceDifference < 0
                     ? sx.down
                     : priceDifference > 0
-                    ? sx.up
-                    : sx.average
+                      ? sx.up
+                      : sx.average
                 } ${
                   priceDifference === 0
                     ? ""
                     : positive
-                    ? sx.positive
-                    : sx.negative
+                      ? sx.positive
+                      : sx.negative
                 }`}
               >
                 {priceDifference.toFixed(0)}%
@@ -102,10 +96,10 @@ function MissionCard({
 }) {
   const minText = `${
     missionDifficulties[mission.difficulty[0]]
-  } (${moneyFormatter.format(mission.reward[0])})`;
+  } (${credits(mission.reward[0])})`;
   const maxText = `${
     missionDifficulties[mission.difficulty[1]]
-  } (${moneyFormatter.format(mission.reward[1])})`;
+  } (${credits(mission.reward[1])})`;
 
   return (
     <div className={sx.itemCard}>
@@ -145,7 +139,7 @@ function KnowledgeCard({ knowledge }: { knowledge: IKnowledge }) {
       </div>
       <div>
         <span className={sx.name}>
-          {knowledge.object.name}
+          {knowledge.object?.name}
           <IoPerson
             size={16}
             style={{ marginLeft: 4, marginTop: 3 }}
@@ -153,7 +147,7 @@ function KnowledgeCard({ knowledge }: { knowledge: IKnowledge }) {
           />
         </span>
         <span className={sx.details}>
-          <span>{moneyFormatter.format(knowledge.price)}</span>
+          <span>{credits(knowledge.price)}</span>
           <span>REP {knowledge.reputation.toFixed(2)}+</span>
         </span>
       </div>
