@@ -1,31 +1,64 @@
 import { ISearchResult } from "@api/types";
 import sx from "./sidebar.module.css";
-import { useCallback, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Navigate, Search, XMark } from "@/components/icons";
+import { useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Search, XMark } from "@/components/icons";
 import { useNavMapContext, useObjectDetails } from "@/data/context/navmap";
+import { useQuery } from "@tanstack/react-query";
 
-export function SearchBox({ className }: { className?: string }) {
-  const { mode, object, searchResult, search, system, setMode } =
-    useNavMapContext();
-  const navigate = useNavigate();
+export function SearchBox({
+  className,
+  onDetailedSearch,
+  onClear,
+  extra,
+  query: queryValue,
+  onQueryChange,
+  onClickResult,
+}: {
+  className?: string;
+  onDetailedSearch?: (query: string) => unknown;
+  onClear?: () => unknown;
+  extra?: React.ReactNode | ((query: string) => React.ReactNode);
+  query?: string;
+  onQueryChange?: (query: string) => unknown;
+  onClickResult?: (result: ISearchResult) => unknown;
+}) {
+  const { mode, object } = useNavMapContext();
 
-  const [query, setQuery] = useState("");
+  const queryState = useState("");
   const [expanded, setExpanded] = useState(false);
 
+  const query = queryValue ?? queryState[0];
+  const setQuery = onQueryChange ?? queryState[1];
+
   const searchTimeout = useRef<number | null>(null);
-  const onChange = useCallback(
-    (value: string) => {
-      setQuery(value);
+  const { data: searchResult } = useQuery({
+    queryKey: ["search", query],
+    queryFn: async ({ queryKey }) => {
+      const [, query] = queryKey;
+      if (!query || query.length < 2) {
+        return [];
+      }
+
       if (searchTimeout.current) {
         clearTimeout(searchTimeout.current);
       }
-      searchTimeout.current = setTimeout(() => {
-        search(value);
-      }, 500);
+      return new Promise<ISearchResult[]>((resolve) => {
+        searchTimeout.current = setTimeout(async () => {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/nav/search?q=${query}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+          }
+
+          const result = (await response.json()) as ISearchResult[];
+          resolve(result.filter((r) => r.relevance > 2));
+        }, 500);
+      });
     },
-    [query]
-  );
+  });
 
   return (
     <div className={`${sx.search} ${className ?? ""}`}>
@@ -34,14 +67,9 @@ export function SearchBox({ className }: { className?: string }) {
           type="search"
           placeholder="Search..."
           value={query}
-          onFocus={(e) => {
-            if (e.target.value.length > 2) {
-              setExpanded(true);
-            }
-          }}
           onChange={(e) => {
-            onChange(e.target.value);
-            if (e.target.value.length > 2) {
+            setQuery(e.target.value);
+            if (e.target.value.length > 1) {
               setExpanded(true);
             } else {
               setExpanded(false);
@@ -52,63 +80,53 @@ export function SearchBox({ className }: { className?: string }) {
               if (searchTimeout.current) {
                 clearTimeout(searchTimeout.current);
               }
-              search(query, "search");
+              onDetailedSearch?.(query);
               setExpanded(false);
             }
           }}
         />
-        <button
-          className={sx.action}
-          onClick={() => {
-            search(query, "search");
-            setExpanded(false);
-          }}
-        >
-          <Search />
-        </button>
-        <button
-          className={sx.action}
-          onClick={() => {
-            search("", "object");
-            setQuery("");
-            if (mode === "path") {
-              setMode("object");
-            } else {
-              if (object) {
-                navigate({
-                  to: "/navmap/$system",
-                  params: { system: system?.nickname ?? "" },
-                });
-              } else {
-                setMode("path");
-              }
-            }
-          }}
-        >
-          {object || mode === "path" ? <XMark /> : <Navigate />}
-        </button>
+        {query && query.length > 1 && !!onDetailedSearch && (
+          <button
+            className={sx.action}
+            onClick={() => {
+              onDetailedSearch(query);
+              setExpanded(false);
+            }}
+          >
+            <Search />
+          </button>
+        )}
+        {!!onClear && (object || query || mode === "search") && (
+          <button
+            className={sx.action}
+            onClick={() => {
+              setQuery("");
+              onClear();
+            }}
+          >
+            <XMark />
+          </button>
+        )}
+        {typeof extra === "function" ? extra(query) : extra}
       </div>
       {expanded && searchResult?.length !== 0 && (
         <ul className={sx.results}>
           {searchResult?.map((e: ISearchResult) => (
             <li data-relevance={e.relevance}>
-              <Link
+              <button
                 className={sx.result}
-                to="/navmap/$system"
-                params={{ system: e.system?.nickname ?? e.nickname }}
-                search={{ nickname: e.system ? e.nickname : undefined }}
-                data-nickname={e.nickname}
-                data-system={e.system?.nickname ?? e.nickname}
+                onClick={() => {
+                  setQuery("");
+                  onClickResult?.(e);
+                }}
               >
-                <button onClick={() => setQuery("")}>
-                  {e.name}
-                  {e.system && (
-                    <small>
-                      {e.system?.name}, Sector {e.sector}
-                    </small>
-                  )}
-                </button>
-              </Link>
+                {e.name}
+                {e.system && (
+                  <small>
+                    {e.system?.name}, Sector {e.sector}
+                  </small>
+                )}
+              </button>
             </li>
           ))}
         </ul>

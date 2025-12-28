@@ -124,7 +124,7 @@ export function NavMapProvider({ children }: { children: React.ReactNode }) {
       }
 
       const result = (await response.json()) as ISearchResult[];
-      return result.filter((r) => r.relevance > 2.5);
+      return result.filter((r) => r.relevance > 2);
     },
   });
 

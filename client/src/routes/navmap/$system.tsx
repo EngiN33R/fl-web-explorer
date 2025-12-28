@@ -245,9 +245,15 @@ export const Route = createFileRoute("/navmap/$system")({
 });
 
 function SectorMarkers() {
+  const { mode, object, system } = useNavMapContext();
   const { scale, pan } = useTransformState();
 
   const opacity = 1 / (scale || 1);
+
+  const showSidebar = mode !== "object" || (!!system && !!object);
+
+  const x = -pan.x / scale;
+  const left = showSidebar ? Math.max(x + 410, 10) : Math.max(x + 10, 10);
 
   return (
     <>
@@ -273,7 +279,7 @@ function SectorMarkers() {
             className={`${styles.sector} ${styles.vertical}`}
             style={{
               top: `${6 + 12.5 * idx}%`,
-              left: `${Math.max(-pan.x / scale + 10, 10)}px`,
+              left: `${left}px`,
               opacity,
             }}
           >

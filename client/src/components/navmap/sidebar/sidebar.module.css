@@ -18,7 +18,7 @@
     margin-top: 0;
   }
 
-  .search {
+  & > .search {
     position: relative;
     width: 100%;
     left: 0;
@@ -227,6 +227,20 @@
     }
   }
 
+  .path {
+    .points {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .swap {
+        position: absolute;
+        top: 0;
+      }
+    }
+  }
+
   .waypoints {
     height: 300px;
     overflow-y: auto;
@@ -348,14 +362,11 @@
     .result {
       display: block;
       flex: 1;
+      width: 100%;
+      padding: 8px;
 
-      & > button {
-        width: 100%;
-        padding: 8px;
-
-        small {
-          display: block;
-        }
+      small {
+        display: block;
       }
     }
 

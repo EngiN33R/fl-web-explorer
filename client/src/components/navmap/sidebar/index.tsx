@@ -3,12 +3,61 @@ import { ObjectDetails } from "./object-details";
 import { useNavMapContext } from "@/data/context/navmap";
 import { Waypoints } from "./waypoints";
 import { SearchBox, SearchDetails } from "./search";
+import { PathSection } from "./path";
+import { Navigate } from "@/components/icons";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 export function Sidebar() {
-  const { system, object, waypoints, mode } = useNavMapContext();
+  const { system, object, waypoints, mode, search, setMode } =
+    useNavMapContext();
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const navigate = useNavigate();
 
-  if (mode === "object" && (!system || !object)) {
-    return <SearchBox className={sx.floating} />;
+  const onClear = () => {
+    search("", "object");
+    if (system) {
+      navigate({
+        to: "/navmap/$system",
+        params: { system: system.nickname },
+      });
+    }
+  };
+
+  const renderPathButton = (query: string) =>
+    !query &&
+    !object &&
+    mode === "object" && (
+      <button
+        className={sx.action}
+        onClick={() => {
+          setMode("path");
+        }}
+      >
+        <Navigate />
+      </button>
+    );
+
+  const showSidebar = mode !== "object" || (!!system && !!object);
+
+  if (!showSidebar) {
+    return (
+      <SearchBox
+        className={sx.floating}
+        onDetailedSearch={(query) => search(query, "search")}
+        onClear={onClear}
+        extra={renderPathButton}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        onClickResult={(result) => {
+          navigate({
+            to: "/navmap/$system",
+            params: { system: result.system?.nickname },
+            search: { nickname: result.nickname },
+          });
+        }}
+      />
+    );
   }
 
   return (
@@ -25,9 +74,16 @@ export function Sidebar() {
           </svg>
         </button>
       </Link> */}
-      <SearchBox />
+      <SearchBox
+        onDetailedSearch={(query) => search(query, "search")}
+        onClear={onClear}
+        extra={renderPathButton}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+      />
       {object && mode === "object" && <ObjectDetails data={object} />}
       {mode === "search" && <SearchDetails />}
+      {mode === "path" && <PathSection />}
       {!!waypoints?.length && <Waypoints waypoints={waypoints} />}
     </aside>
   );
