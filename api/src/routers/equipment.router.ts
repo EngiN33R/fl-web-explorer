@@ -9,8 +9,12 @@ const router = Router();
 
 router.get("/search", async (req, res) => {
   const search = (req.query.q as string)?.toLowerCase() ?? "";
-  const { kind, hardpoint, soldBy, soldIn, soldAt, limit } =
+  const { kind, soldBy, soldIn, soldAt, limit, obtainable } =
     req.query as Record<string, string>;
+
+  const hardpoints = req.query.hardpoint
+    ? (req.query.hardpoint as string[])
+    : undefined;
 
   const exact = search ? equipment.findAll() : equipment.findByNickname(search);
   if (exact) {
@@ -30,7 +34,13 @@ router.get("/search", async (req, res) => {
     if (kind && e.kind !== kind) {
       return false;
     }
-    if (hardpoint && e.hardpoint !== hardpoint) {
+    if (hardpoints && !hardpoints.includes(e.hardpoint)) {
+      return false;
+    }
+    if (
+      obtainable &&
+      !DataContext.INSTANCE.procurer.getProcurementDetails(e.nickname).length
+    ) {
       return false;
     }
     const sellingBases = DataContext.INSTANCE.market
@@ -92,7 +102,19 @@ router.get("/ship/:id", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
-  res.json(equipment.findByNickname(req.params.id));
+  const eq = equipment.findByNickname(req.params.id);
+  if (!eq) {
+    res.status(404).json({ error: `Equipment ${req.params.id} not found` });
+    return;
+  }
+  res.json(
+    deepParseInfocards({
+      ...eq,
+      obtainable: DataContext.INSTANCE.procurer.getProcurementDetails(
+        eq.nickname
+      ),
+    })
+  );
 });
 
 export default router;

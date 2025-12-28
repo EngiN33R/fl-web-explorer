@@ -12,12 +12,18 @@ import { initializeImageMagick } from "@imagemagick/magick-wasm";
 const app = express();
 
 app.use(cors());
+app.set("query parser", "extended");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/ids/:label", async (req, res) => {
+  const label = DataContext.INSTANCE.findLabel(req.params.label);
+  res.json({ label });
 });
 
 app.use("/nav", navigation);

@@ -1,0 +1,15 @@
+.detail {
+  padding: 8px;
+  border-bottom: 1px solid #444444;
+
+  .name {
+    font-size: 130%;
+    font-weight: 600;
+  }
+
+  .obtainable {
+    h3 {
+      font-size: 110%;
+    }
+  }
+}

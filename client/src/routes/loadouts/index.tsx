@@ -3,6 +3,9 @@ import { IEquipment, IShip } from "fl-node-orm";
 import { useQuery } from "@tanstack/react-query";
 import { useReducer, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { EquipmentDetail } from "@/components/equipment/equip-detail";
+import { groupBy } from "lodash";
+import { Ids } from "@/components/ids";
 
 export const Route = createFileRoute("/loadouts/")({
   component: LoadoutsView,
@@ -35,7 +38,6 @@ function LoadoutsView() {
             equipment: {},
           };
         case "set_equipment":
-          console.log(action.hardpointId, action.equipment);
           return {
             ...state,
             equipment: {
@@ -51,9 +53,11 @@ function LoadoutsView() {
     }
   );
 
-  const [hardpoint, setHardpoint] = useState<
-    { id: string; type: string } | undefined
-  >();
+  const [hardpoint, setHardpoint] = useState<string | undefined>();
+  const equipmentTypes =
+    loadout.ship?.hardpoints
+      .filter((hp) => hp.id === hardpoint)
+      .map((hp) => hp.type) ?? [];
   const [search, setSearch] = useState("");
 
   const { data: ships } = useQuery<IShip[]>({
@@ -61,15 +65,16 @@ function LoadoutsView() {
     queryFn: () =>
       fetch(`${import.meta.env.VITE_API_URL}/equip/ship`).then((r) => r.json()),
   });
+
   const { data: equipment } = useQuery<IEquipment[]>({
-    queryKey: ["equipment", hardpoint?.type],
+    queryKey: ["equipment", JSON.stringify(equipmentTypes)],
     queryFn: async ({ queryKey }) => {
       const hardpoint = queryKey[1] as string | undefined;
       if (!hardpoint) {
         return [];
       }
       const result = await fetch(
-        `${import.meta.env.VITE_API_URL}/equip/search?hardpoint=${hardpoint}&limit=0`
+        `${import.meta.env.VITE_API_URL}/equip/search?${equipmentTypes.map((type) => `hardpoint[]=${type}`).join("&")}&obtainable=true&limit=0`
       );
       return result.json();
     },
@@ -94,25 +99,29 @@ function LoadoutsView() {
           ))}
         </select>
         <ul className={sx.equipment}>
-          {loadout.ship?.hardpoints.map((hp) => (
-            <li
-              key={hp.id}
-              className={`${sx.hardpoint} ${hardpoint?.id === hp.id ? sx.active : ""}`}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setHardpoint(hp);
-                }}
+          {Object.entries(groupBy(loadout.ship?.hardpoints ?? [], "id")).map(
+            ([id, hps]) => (
+              <li
+                key={id}
+                className={`${sx.hardpoint} ${hardpoint === id ? sx.active : ""}`}
               >
-                <div className={sx.name}>
-                  {loadout.equipment[hp.id]?.name ?? "Empty"}
-                </div>
-                <div className={sx.caption}>{hp.type}</div>
-              </button>
-            </li>
-          ))}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setHardpoint(id);
+                  }}
+                >
+                  <div className={sx.name}>
+                    {loadout.equipment[id]?.name ?? "Empty"}
+                  </div>
+                  <div className={sx.caption}>
+                    <Ids>{hps[0].type}</Ids>
+                  </div>
+                </button>
+              </li>
+            )
+          )}
         </ul>
       </div>
       {hardpoint && (
@@ -124,18 +133,11 @@ function LoadoutsView() {
               setSearch("");
             }}
           />
-          {hardpoint && loadout.equipment[hardpoint.id] && (
-            <div className={sx.detail}>
-              <div className={sx.name}>
-                {loadout.equipment[hardpoint.id].name}
-              </div>
-              <div
-                className={sx.description}
-                dangerouslySetInnerHTML={{
-                  __html: loadout.equipment[hardpoint.id].infocard,
-                }}
-              />
-            </div>
+          {hardpoint && loadout.equipment[hardpoint] && (
+            <EquipmentDetail
+              className={sx.detail}
+              nickname={loadout.equipment[hardpoint].nickname}
+            />
           )}
           <div className={sx.search}>
             <input
@@ -155,14 +157,14 @@ function LoadoutsView() {
                   <li key={e.nickname}>
                     <button
                       className={
-                        loadout.equipment[hardpoint.id]?.nickname === e.nickname
+                        loadout.equipment[hardpoint]?.nickname === e.nickname
                           ? sx.active
                           : ""
                       }
                       onClick={() =>
                         dispatchLoadout({
                           type: "set_equipment",
-                          hardpointId: hardpoint.id,
+                          hardpointId: hardpoint,
                           equipment: e,
                         })
                       }
