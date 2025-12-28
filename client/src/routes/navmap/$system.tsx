@@ -17,7 +17,7 @@ import { CSSProperties, useRef } from "react";
 import { z } from "zod";
 import styles from "./navmap.module.css";
 import { RiMapPin2Fill } from "react-icons/ri";
-import { useNavMapContext } from "@/components/navmap/context";
+import { useNavMapContext } from "@/data/context/navmap";
 
 interface TradeLaneObject {
   startPosition: [number, number, number];
@@ -28,6 +28,13 @@ export const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
   "hazard_buoy",
+  "wplatform",
+  "docking_fixture",
+  "com_sat",
+  /^depot_.+/,
+  /^wplatform_.+/,
+  /^space_tank.+/,
+  /^track_ring.+/,
 ];
 
 const objectFilter = (o: IObjectRes) =>
@@ -118,6 +125,7 @@ function NavSegment({
         ...lineStyle,
         borderColor: "#f0f",
         color: "#f0f",
+        borderWidth: 2,
       }}
     />
   );

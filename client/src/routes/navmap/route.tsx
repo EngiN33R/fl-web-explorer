@@ -10,8 +10,8 @@ import {
   TransformComponent,
   ReactZoomPanPinchRef,
 } from "react-zoom-pan-pinch";
-import { SearchBox, Sidebar } from "@/components/navmap/sidebar";
-import { NavMapProvider } from "@/components/navmap/context";
+import { Sidebar } from "@/components/navmap/sidebar";
+import { NavMapProvider, useSystemData } from "@/data/context/navmap";
 import styles from "./navmap.module.css";
 import { Galaxy } from "../../components/icons";
 
@@ -23,6 +23,8 @@ export function NavMapLayout() {
   const transformRef = useRef<ReactZoomPanPinchRef>();
   const location = useLocation();
 
+  const { data: system } = useSystemData();
+
   useEffect(() => {
     if (transformRef.current) {
       transformRef.current.resetTransform(0);
@@ -33,11 +35,11 @@ export function NavMapLayout() {
     <NavMapProvider>
       <Sidebar />
       <div className={styles.sizeContainer}>
-        <SearchBox />
         <TransformWrapper
-          maxScale={4}
-          minScale={1}
+          maxScale={6}
+          minScale={0.8}
           centerOnInit
+          limitToBounds={false}
           onPanningStart={(ref) => {
             if (ref.instance.wrapperComponent) {
               ref.instance.wrapperComponent.style.cursor = "grabbing";
@@ -54,16 +56,21 @@ export function NavMapLayout() {
         >
           <TransformComponent
             wrapperStyle={{ width: "100%", height: "100%", cursor: "grab" }}
-            contentStyle={{ width: "100%", aspectRatio: "1 / 1" }}
+            contentStyle={{
+              height: "100%",
+              aspectRatio: "1 / 1",
+            }}
           >
             <Outlet />
           </TransformComponent>
         </TransformWrapper>
-        <Link to="/navmap">
-          <button className={styles.home} title="Sector map">
-            <Galaxy />
-          </button>
-        </Link>
+        {!!system && (
+          <Link to="/navmap">
+            <button className={styles.home} title="Sector map">
+              <Galaxy />
+            </button>
+          </Link>
+        )}
       </div>
     </NavMapProvider>
   );

@@ -13,14 +13,45 @@ import type {
 type BitmaskJSON<B extends Bitmask<string> | undefined> =
   NonNullable<B> extends Bitmask<infer T> ? Array<T> : Array<unknown>;
 
-export type IZoneRes = Omit<IZone, "visit" | "properties"> & {
+export type IZoneKind =
+  | "zone"
+  | "zone_nebula"
+  | "zone_mines"
+  | "zone_rocky"
+  | "zone_icy"
+  | "zone_crystal"
+  | "zone_debris"
+  | "zone_gas"
+  | "zone_lava";
+
+export type IObjectKind =
+  | "jump_gate"
+  | "jump_hole"
+  | "lootable_wreck"
+  | "lootable_depot"
+  | "planet"
+  | "station"
+  | "star"
+  | "mineable"
+  | "generic";
+
+export type IBaseKind = "planet" | "station" | "generic";
+
+export type IZoneRes = Omit<IZone, "visit" | "properties" | "system"> & {
   visit?: BitmaskJSON<IZone["visit"]>;
   properties?: BitmaskJSON<IZone["properties"]>;
+  system?: { nickname: string; name: string };
+  kind: IZoneKind;
 };
 
-export type IObjectRes = Omit<IObject, "visit" | "properties"> & {
+export type IObjectRes = Omit<
+  IObject,
+  "visit" | "properties" | "system" | "faction"
+> & {
   visit?: BitmaskJSON<IZone["visit"]>;
   properties?: BitmaskJSON<IZone["properties"]>;
+  system?: { nickname: string; name: string };
+  faction?: { nickname: string; name: string };
   loadout?: {
     equipment: {
       equipment: IEquipment;
@@ -31,29 +62,34 @@ export type IObjectRes = Omit<IObject, "visit" | "properties"> & {
       count: number;
     }[];
   };
+  kind: IObjectKind;
 };
 
-export type IBaseRes = Omit<IBase, "visit"> & {
+export type IBaseRes = Omit<IBase, "visit" | "system" | "faction"> & {
   visit?: BitmaskJSON<IZone["visit"]>;
+  system?: { nickname: string; name: string };
+  faction?: { nickname: string; name: string };
+  kind: IBaseKind;
 };
 
 export type ISystemRes = Omit<
   ISystem,
-  "visit" | "zones" | "objects" | "bases"
+  "visit" | "zones" | "objects" | "bases" | "tradelanes" | "system" | "faction"
 > & {
   visit?: BitmaskJSON<IZone["visit"]>;
   zones: IZoneRes[];
   objects: IObjectRes[];
   bases: IBaseRes[];
+  kind: "system";
+  tradelanes: Array<{
+    startPosition: [number, number, number];
+    endPosition: [number, number, number];
+    rings: Array<{ nickname: string; position: [number, number, number] }>;
+    faction?: string;
+  }>;
 };
 
-export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
-  objectNickname: string;
-  system: {
-    nickname: string;
-    name: string;
-  };
-  sector: string;
+export type IBarData = {
   missions: Array<{
     faction: IFaction;
     difficulty: [number, number];
@@ -81,6 +117,20 @@ export type ISearchResult = (IZoneRes | IObjectRes | IBaseRes) & {
       reward: [number, number];
     }>;
   }>;
+};
+
+export type ISearchResult = (
+  | IZoneRes
+  | IObjectRes
+  | (IBaseRes & IBarData)
+  | ISystemRes
+) & {
+  objectNickname: string;
+  system: {
+    nickname: string;
+    name: string;
+  };
+  sector: string;
   relevance: number;
 };
 

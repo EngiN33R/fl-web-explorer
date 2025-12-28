@@ -1,4 +1,4 @@
-import { IBaseRes, IMarketOfferRes, ISearchResult } from "@api/types";
+import { IBarData, IBaseRes, IMarketOfferRes, ISearchResult } from "@api/types";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
 import sx from "../sidebar.module.css";
 import { useQuery } from "@tanstack/react-query";
@@ -11,8 +11,8 @@ import { credits } from "@/util";
 type IRumor = {
   rumor: string;
   faction: IFaction;
-  objects: ISearchResult["npcs"][number]["rumors"][number]["objects"];
-  npcs: ISearchResult["npcs"][number][];
+  objects: IBarData["npcs"][number]["rumors"][number]["objects"];
+  npcs: IBarData["npcs"][number][];
 };
 
 const missionDifficulties: Record<number, string> = {
@@ -90,8 +90,8 @@ function MarketCard({ offer }: { offer: IMarketOfferRes }) {
 function MissionCard({
   mission,
 }: {
-  mission: ISearchResult["missions"][number] & {
-    npcs?: ISearchResult["npcs"][number][];
+  mission: IBarData["missions"][number] & {
+    npcs?: IBarData["npcs"][number][];
   };
 }) {
   const minText = `${
@@ -127,8 +127,8 @@ function MissionCard({
   );
 }
 
-type IKnowledge = ISearchResult["npcs"][number]["knowledge"][number] & {
-  npc: ISearchResult["npcs"][number];
+type IKnowledge = IBarData["npcs"][number]["knowledge"][number] & {
+  npc: IBarData["npcs"][number];
 };
 
 function KnowledgeCard({ knowledge }: { knowledge: IKnowledge }) {
@@ -185,7 +185,11 @@ function RumorCard({ rumor }: { rumor: IRumor }) {
   );
 }
 
-export function BaseTabs({ data }: { data: IBaseRes & ISearchResult }) {
+export function BaseTabs({
+  data,
+}: {
+  data: IBaseRes & ISearchResult & IBarData;
+}) {
   const { data: offers } = useQuery<IMarketOfferRes[]>({
     queryKey: ["base-goods", data.nickname],
     queryFn: () =>
@@ -219,8 +223,8 @@ export function BaseTabs({ data }: { data: IBaseRes & ISearchResult }) {
     },
     {} as Record<
       string,
-      ISearchResult["missions"][number] & {
-        npcs: ISearchResult["npcs"][number][];
+      IBarData["missions"][number] & {
+        npcs: IBarData["npcs"][number][];
       }
     >
   );

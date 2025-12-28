@@ -63,7 +63,6 @@ router.get("/search", async (req, res) => {
     res.json([
       {
         ...serializeSystem(exact),
-        type: "system",
         relevance: 1000,
       },
     ]);
@@ -78,7 +77,6 @@ router.get("/search", async (req, res) => {
       {
         ...serializeObject(exact),
         ...fetchBarData(exact as IBase),
-        sector: calculateSector(exact),
         relevance: 1000,
       },
     ]);
@@ -116,7 +114,10 @@ router.get("/search", async (req, res) => {
         const body = eligible[r[0]];
         return {
           ...body,
-          objectNickname: body.objectNickname ?? body.nickname,
+          objectNickname:
+            "objectNickname" in body
+              ? (body.objectNickname ?? body.nickname)
+              : body.nickname,
           relevance: r[1],
         };
       })

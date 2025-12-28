@@ -2,6 +2,15 @@ import { DataContext, IBase, IObject, ISystem, IZone } from "fl-node-orm";
 import { convertXmlToHtml } from "./rdl";
 import { IniLoadout } from "fl-node-orm/dist/ini-types";
 import { uniqBy } from "lodash";
+import {
+  IBaseKind,
+  IBaseRes,
+  IObjectKind,
+  IObjectRes,
+  ISystemRes,
+  IZoneKind,
+  IZoneRes,
+} from "../types";
 
 function getOptionalObject(nickname: string | undefined) {
   if (!nickname) {
@@ -56,14 +65,26 @@ export const IGNORED_ARCHETYPES = [
   "track_ring",
 ];
 
-export const serializeSystem = (body: ISystem) => {
+export const serializeSystem = (body: ISystem): ISystemRes => {
   return {
+    type: "system",
     nickname: body.nickname,
     name: body.name,
     infocard: convertXmlToHtml(body.infocard),
     territory: body.territory,
     position: body.position,
-    visit: body.visit,
+    visit: body.visit.toJSON(),
+    kind: "system",
+    size: body.size,
+    tradelanes: body.tradelanes.map((t) => ({
+      startPosition: t.startPosition,
+      endPosition: t.endPosition,
+      rings: t.rings.map((r) => ({
+        nickname: r.nickname,
+        position: r.position,
+      })),
+      faction: t.faction,
+    })),
     connections: Object.values(
       body.connections.reduce(
         (acc, c) => {
@@ -87,6 +108,9 @@ export const serializeSystem = (body: ISystem) => {
         >
       )
     ),
+    zones: body.zones.map((z) => serializeObject(z)),
+    objects: body.objects.map((o) => serializeObject(o)),
+    bases: body.bases.map((b) => serializeObject(b)),
   };
 };
 
@@ -237,7 +261,83 @@ export const calculateSector = (object: {
   return `${horizontal}${vertical}`;
 };
 
-export const serializeObject = (body: IObject | IBase | IZone) => {
+export const determineKind = (data: IObject | IBase | IZone) => {
+  const loadoutCargo =
+    "loadout" in data && data.loadout
+      ? DataContext.INSTANCE.ini<{ loadout: IniLoadout }>("loadouts")
+          ?.findByNickname("loadout", data.loadout)
+          ?.asArray("cargo", true)
+      : undefined;
+
+  let kind = "generic";
+  if (data.type === "zone") {
+    kind = "zone";
+    if (data.properties?.has("NEBULA")) {
+      kind = "zone_nebula";
+    } else if (data.properties?.has("MINES")) {
+      kind = "zone_mines";
+    } else if (
+      data.properties?.has("ROCK") ||
+      data.properties?.has("BADLANDS") ||
+      data.properties?.has("NOMAD")
+    ) {
+      kind = "zone_rocky";
+    } else if (data.properties?.has("ICE")) {
+      kind = "zone_icy";
+    } else if (data.properties?.has("CRYSTAL")) {
+      kind = "zone_crystal";
+    } else if (data.properties?.has("DEBRIS")) {
+      kind = "zone_debris";
+    } else if (data.properties?.has("GAS_POCKETS")) {
+      kind = "zone_gas";
+    } else if (data.properties?.has("LAVA")) {
+      kind = "zone_lava";
+    }
+  } else if (
+    data.archetype?.includes("jump") ||
+    data.archetype?.includes("nomad_gate")
+  ) {
+    if (data.archetype.includes("gate")) {
+      kind = `jump_gate`;
+    } else {
+      kind = "jump_hole";
+    }
+  } else if (
+    data.archetype?.includes("surprise") ||
+    data.archetype?.includes("suprise")
+  ) {
+    kind = "lootable_wreck";
+  } else if (
+    (data.archetype?.includes("depot_") ||
+      data.archetype?.includes("space_industrial")) &&
+    !!loadoutCargo?.length
+  ) {
+    kind = "lootable_depot";
+  } else if (data.archetype?.includes("planet")) {
+    kind = "planet";
+  } else if (data.type === "base") {
+    kind = "station";
+  } else if (data.archetype?.includes("sun")) {
+    kind = "star";
+  } else if (
+    data.archetype?.includes("mineable") &&
+    !data.archetype?.includes("wplatform")
+  ) {
+    kind = "mineable";
+  }
+
+  return kind as IObjectKind | IBaseKind | IZoneKind;
+};
+
+export function serializeObject(body: IObject): IObjectRes;
+export function serializeObject(body: IBase): IBaseRes;
+export function serializeObject(body: IZone): IZoneRes;
+export function serializeObject(
+  body: IObject | IBase | IZone
+): IObjectRes | IBaseRes | IZoneRes;
+export function serializeObject(
+  body: IObject | IBase | IZone
+): IObjectRes | IBaseRes | IZoneRes {
   const system = DataContext.INSTANCE.findByNickname("system", body.system);
   const faction =
     "faction" in body && body.faction
@@ -303,17 +403,26 @@ export const serializeObject = (body: IObject | IBase | IZone) => {
           name: system.name,
         }
       : undefined,
-    faction: faction
-      ? {
-          nickname: faction.nickname,
-          name: faction.name,
-        }
-      : undefined,
-    objectNickname:
-      "objectNickname" in body ? body.objectNickname : body.nickname,
-    loadout,
-  };
-};
+    ...("faction" in body && {
+      faction: faction
+        ? {
+            nickname: faction.nickname,
+            name: faction.name,
+          }
+        : undefined,
+    }),
+    ...("objectNickname" in body && { objectNickname: body.objectNickname }),
+    ...("loadout" in body && { loadout }),
+    ...(body.position &&
+      body.system && {
+        sector: calculateSector({
+          position: body.position,
+          system: body.system,
+        }),
+      }),
+    kind: determineKind(body),
+  } as IObjectRes | IBaseRes | IZoneRes;
+}
 
 export const deepParseInfocards = <T extends Record<string, any>>(
   obj: T
