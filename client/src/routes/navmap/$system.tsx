@@ -13,7 +13,7 @@ import {
   IZoneRes,
 } from "@api/types";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { CSSProperties, useRef } from "react";
+import { CSSProperties, useRef, useEffect, useState, useMemo } from "react";
 import { z } from "zod";
 import styles from "./navmap.module.css";
 import { RiMapPin2Fill } from "react-icons/ri";
@@ -57,9 +57,11 @@ const zoneFilter = (z: IZoneRes) =>
 function Node({
   data,
   system,
+  labelOffset = 0,
 }: {
   data: IBaseRes | IObjectRes;
   system: ISystemRes;
+  labelOffset?: number;
 }) {
   const { scale } = useTransformState();
   const [relX, , relY] = useRelPos(data.position, system.size);
@@ -81,7 +83,14 @@ function Node({
       }}
     >
       <i className={styles.icon} />
-      <span className={styles.label}>{data.name}</span>
+      <span
+        className={styles.label}
+        style={{
+          marginTop: `${10 + labelOffset}px`,
+        }}
+      >
+        {data.name}
+      </span>
     </Link>
   );
 }
@@ -298,10 +307,166 @@ function Pin({ position }: { position?: [number, number, number] }) {
 
 function RouteComponent() {
   const { system, object, waypoints } = useNavMapContext();
+  const { scale } = useTransformState();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [labelOffsets, setLabelOffsets] = useState<Map<string, number>>(
+    new Map()
+  );
+  const previousOffsetsRef = useRef<string>("");
+
+  // Collect all nodes
+  const allNodes = useMemo(() => {
+    if (!system) return [];
+    return [
+      ...(system.bases ?? []).map((data) => ({
+        data,
+        nickname: data.nickname,
+      })),
+      ...(system.objects ?? []).filter(objectFilter).map((data) => ({
+        data,
+        nickname: data.nickname,
+      })),
+    ];
+  }, [system]);
+
+  // Calculate label offsets after render - only recalculate when nodes/scale/system change
+  useEffect(() => {
+    if (allNodes.length === 0 || !containerRef.current) {
+      setLabelOffsets(new Map());
+      return;
+    }
+
+    // Wait for DOM to be ready, then calculate offsets based on base positions
+    const timeoutId = setTimeout(() => {
+      const offsets = new Map<string, number>();
+      const nodeElements: Array<{
+        nickname: string;
+        iconEl: HTMLElement;
+        labelEl: HTMLElement;
+        iconRect: DOMRect;
+        labelWidth: number;
+        labelHeight: number;
+        baseLabelTop: number; // Position without offset
+        yPos: number;
+      }> = [];
+
+      // First, temporarily reset all label offsets to get base positions
+      allNodes.forEach(({ nickname }) => {
+        const nodeEl = containerRef.current?.querySelector(
+          `[data-nickname="${nickname}"][data-type="object"]`
+        ) as HTMLElement;
+        if (!nodeEl) return;
+
+        const iconEl = nodeEl.querySelector(`.${styles.icon}`) as HTMLElement;
+        const labelEl = nodeEl.querySelector(`.${styles.label}`) as HTMLElement;
+
+        if (iconEl && labelEl) {
+          // Temporarily set marginTop to base value to get accurate measurements
+          const originalMarginTop = labelEl.style.marginTop;
+          labelEl.style.marginTop = "10px";
+
+          // Force reflow
+          labelEl.offsetHeight;
+
+          const iconRect = iconEl.getBoundingClientRect();
+          const labelRect = labelEl.getBoundingClientRect();
+          const baseLabelTop = iconRect.bottom + 10; // 10px is the base marginTop
+
+          nodeElements.push({
+            nickname,
+            iconEl,
+            labelEl,
+            iconRect,
+            labelWidth: labelRect.width,
+            labelHeight: labelRect.height,
+            baseLabelTop,
+            yPos: iconRect.top,
+          });
+
+          // Restore original marginTop
+          labelEl.style.marginTop = originalMarginTop;
+        }
+      });
+
+      // Sort by Y position (top to bottom)
+      nodeElements.sort((a, b) => a.yPos - b.yPos);
+
+      // Calculate offsets iteratively until convergence
+      let changed = true;
+      let iterations = 0;
+      const maxIterations = 20;
+
+      while (changed && iterations < maxIterations) {
+        changed = false;
+        iterations++;
+
+        for (let i = 0; i < nodeElements.length; i++) {
+          const current = nodeElements[i];
+          const currentOffset = offsets.get(current.nickname) ?? 0;
+          const currentLabelTop = current.baseLabelTop + currentOffset;
+          const currentLabelBottom = currentLabelTop + current.labelHeight;
+          let maxOffset = currentOffset;
+
+          // Check against all nodes above
+          for (let j = 0; j < i; j++) {
+            const other = nodeElements[j];
+            const otherOffset = offsets.get(other.nickname) ?? 0;
+            const otherIconBottom = other.iconRect.bottom;
+            const otherLabelTop = other.baseLabelTop + otherOffset;
+            const otherLabelBottom = otherLabelTop + other.labelHeight;
+
+            // Check horizontal overlap
+            const horizontalOverlap =
+              current.iconRect.left < other.iconRect.right &&
+              current.iconRect.right > other.iconRect.left;
+
+            if (!horizontalOverlap) continue;
+
+            // Check if current label overlaps with other icon
+            // Label overlaps icon if: label top < icon bottom AND label bottom > icon top
+            const otherIconTop = other.iconRect.top;
+            if (
+              currentLabelTop < otherIconBottom &&
+              currentLabelBottom > otherIconTop
+            ) {
+              const overlap = otherIconBottom - currentLabelTop;
+              maxOffset = Math.max(maxOffset, currentOffset + overlap + 2);
+            }
+
+            // Check if current label overlaps with other label
+            if (
+              currentLabelTop < otherLabelBottom &&
+              currentLabelBottom > otherLabelTop
+            ) {
+              const overlap = otherLabelBottom - currentLabelTop;
+              maxOffset = Math.max(maxOffset, currentOffset + overlap + 2);
+            }
+          }
+
+          if (maxOffset !== currentOffset) {
+            offsets.set(current.nickname, maxOffset);
+            changed = true;
+          }
+        }
+      }
+
+      const offsetsStr = JSON.stringify(Array.from(offsets.entries()).sort());
+      if (previousOffsetsRef.current !== offsetsStr) {
+        previousOffsetsRef.current = offsetsStr;
+        setLabelOffsets(offsets);
+      }
+    }, 50); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timeoutId);
+  }, [allNodes, scale, system]);
 
   return (
     <article id="navmap-container" className={styles.navmapContainer}>
-      <div id="navmap-root" className={`${styles.navmapRoot} ${styles.system}`}>
+      <div
+        ref={containerRef}
+        id="navmap-root"
+        className={`${styles.navmapRoot} ${styles.system}`}
+      >
         {system?.tradelanes?.map((data) => (
           <TradeLane
             key={
@@ -321,6 +486,7 @@ function RouteComponent() {
             key={`${data.nickname}-${data.position.join(",")}`}
             data={data}
             system={system}
+            labelOffset={labelOffsets.get(data.nickname) ?? 0}
           />
         ))}
         {system?.objects
@@ -330,6 +496,7 @@ function RouteComponent() {
               key={`${data.nickname}-${data.position.join(",")}`}
               data={data}
               system={system}
+              labelOffset={labelOffsets.get(data.nickname) ?? 0}
             />
           ))}
         {waypoints
