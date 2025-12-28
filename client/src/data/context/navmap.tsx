@@ -1,6 +1,14 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import { useTransformEffect } from "react-zoom-pan-pinch";
-import { ISearchResult, ISystemRes, IWaypointRes } from "@api/types";
+import {
+  IBaseRes,
+  IObjectRes,
+  ISearchResult,
+  ISystemRes,
+  IWaypointRes,
+  IZoneRes,
+} from "@api/types";
+import { GiAnchor } from "react-icons/gi";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearch } from "@tanstack/react-router";
 import {
@@ -10,7 +18,6 @@ import {
   Mining,
   Nebula,
   Planet,
-  Shop,
   Star,
   System,
   Unknown,
@@ -73,7 +80,7 @@ export function NavMapProvider({ children }: { children: React.ReactNode }) {
   const { data: system } = useSystemData();
   const { data: object } = useObjectData();
 
-  console.log(history.state);
+  // console.log(history.state);
 
   const mode = history.state?.navmapMode ?? "object";
   const setMode = (mode: "object" | "search" | "path") => {
@@ -203,10 +210,20 @@ export function useLineStyle<T extends number[]>(
   };
 }
 
-export function useObjectDetails(data: ISearchResult) {
+export function useObjectDetails(
+  data: IObjectRes | IZoneRes | IBaseRes | ISystemRes,
+  fallback = { icon: <Unknown /> } as {
+    icon: React.ReactNode;
+    summary?: string;
+  }
+) {
   return useMemo(() => {
     if (!data) {
-      return { icon: <Unknown />, summary: "Unknown", faction: "" };
+      return { summary: "Unknown", ...fallback };
+    }
+
+    if (data.type === "object" && data.archetype === "dock_ring") {
+      return { icon: <GiAnchor className="fill" />, summary: "Docking Ring" };
     }
 
     switch (data.kind) {
@@ -276,7 +293,7 @@ export function useObjectDetails(data: ISearchResult) {
         };
       case "station":
         return {
-          icon: <Shop />,
+          icon: <GiAnchor className="fill" />,
           summary: "Station",
         };
       case "star":
@@ -291,9 +308,9 @@ export function useObjectDetails(data: ISearchResult) {
         };
       default:
         return {
-          icon: <Unknown />,
           summary: `Unknown (${"archetype" in data ? data.archetype : data.kind})`,
+          ...fallback,
         };
     }
-  }, [data]);
+  }, [data, fallback]);
 }

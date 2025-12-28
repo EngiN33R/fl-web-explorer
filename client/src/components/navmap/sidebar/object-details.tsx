@@ -36,12 +36,12 @@ export function ObjectDetails({ data }: { data: ISearchResult }) {
           <div className={sx.icon}>{details?.icon}</div>
           {details?.summary}
         </div>
-        {details?.faction && (
+        {"faction" in data && data.faction && (
           <div className={sx.faction}>
             <div className={sx.icon}>
               <Flag />
             </div>
-            {details?.faction}
+            {data.faction?.name}
           </div>
         )}
         <div className={sx.location}>

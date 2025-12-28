@@ -143,7 +143,7 @@ function KnowledgeCard({ knowledge }: { knowledge: IKnowledge }) {
           <IoPerson
             size={16}
             style={{ marginLeft: 4, marginTop: 3 }}
-            title={`Sold by ${knowledge.npc.name}`}
+            title={`Sold by ${knowledge.npc.name} of ${knowledge.npc.faction.name}`}
           />
         </span>
         <span className={sx.details}>

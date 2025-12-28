@@ -107,9 +107,11 @@
     .title {
       display: flex;
       align-items: center;
+      margin-bottom: 12px;
 
       h1 {
         margin: 0;
+        line-height: 1;
       }
 
       .jump {
@@ -119,9 +121,11 @@
         margin-bottom: -6px;
         margin-left: 8px;
         stroke: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.5);
 
         &:hover {
           stroke: rgba(255, 255, 255, 0.87);
+          color: rgba(255, 255, 255, 0.87);
         }
       }
     }
@@ -133,6 +137,8 @@
       gap: 8px;
 
       .icon {
+        color: rgba(255, 255, 255, 0.5);
+
         svg {
           width: 24px;
           height: 24px;
@@ -243,6 +249,7 @@
 
         .icon {
           stroke: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.5);
           width: 24px;
           height: 24px;
           display: flex;
@@ -312,6 +319,7 @@
 
       svg {
         stroke: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.5);
         fill: transparent;
         &:global(.fill) {
           fill: rgba(255, 255, 255, 0.5);

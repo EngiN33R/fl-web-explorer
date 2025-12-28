@@ -36,10 +36,7 @@ router.get("/system/:nickname", async (req, res) => {
     res.status(404).send("Not found");
     return;
   }
-  res.json({
-    ...system,
-    infocard: convertXmlToHtml(system.infocard),
-  });
+  res.json(serializeSystem(system));
 });
 
 router.get("/search", async (req, res) => {

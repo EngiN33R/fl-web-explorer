@@ -37,9 +37,10 @@ export function NavMapLayout() {
       <div className={styles.sizeContainer}>
         <TransformWrapper
           maxScale={6}
-          minScale={0.8}
-          centerOnInit
+          minScale={1}
+          initialPositionX={420}
           limitToBounds={false}
+          doubleClick={{ disabled: true }}
           onPanningStart={(ref) => {
             if (ref.instance.wrapperComponent) {
               ref.instance.wrapperComponent.style.cursor = "grabbing";

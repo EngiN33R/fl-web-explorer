@@ -1,6 +1,7 @@
 import {
   toRelPos,
   useLineStyle,
+  useObjectDetails,
   useRelPos,
   useRelSize,
   useTransformState,
@@ -18,6 +19,7 @@ import { z } from "zod";
 import styles from "./navmap.module.css";
 import { RiMapPin2Fill } from "react-icons/ri";
 import { useNavMapContext } from "@/data/context/navmap";
+import { FlagCircled } from "@/components/icons";
 
 interface TradeLaneObject {
   startPosition: [number, number, number];
@@ -64,6 +66,9 @@ function Node({
   labelOffset?: number;
 }) {
   const { scale } = useTransformState();
+  const details = useObjectDetails(data, {
+    icon: <FlagCircled />,
+  });
   const [relX, , relY] = useRelPos(data.position, system.size);
 
   return (
@@ -82,7 +87,7 @@ function Node({
         transform: `translateX(-50%) scale(${1 / scale})`,
       }}
     >
-      <i className={styles.icon} />
+      <i className={styles.icon}>{details.icon}</i>
       <span
         className={styles.label}
         style={{

@@ -119,12 +119,9 @@ export type IBarData = {
   }>;
 };
 
-export type ISearchResult = (
-  | IZoneRes
-  | IObjectRes
-  | (IBaseRes & IBarData)
-  | ISystemRes
-) & {
+export type ISearchResult<
+  T = IZoneRes | IObjectRes | (IBaseRes & IBarData) | ISystemRes,
+> = T & {
   objectNickname: string;
   system: {
     nickname: string;
