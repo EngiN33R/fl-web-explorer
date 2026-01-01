@@ -82,7 +82,10 @@ export const serializeSystem = (body: ISystem): ISystemRes => {
       rings: t.rings.map((r) => ({
         nickname: r.nickname,
         position: r.position,
+        tradelaneSpaceName: r.tradelaneSpaceName,
+        tradelaneIndex: r.tradelaneIndex,
       })),
+      names: t.names,
       faction: t.faction,
     })),
     connections: Object.values(
