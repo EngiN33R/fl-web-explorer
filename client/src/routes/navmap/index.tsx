@@ -4,6 +4,7 @@ import sx from "./navmap.module.css";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTransformState } from "@/data/context/navmap";
+import { System } from "@/components/icons";
 
 export const Route = createFileRoute("/navmap/")({
   component: UniverseMap,
@@ -28,9 +29,12 @@ function Node(props: { data: ISystemRes }) {
           left: `${relX}%`,
           top: `${relY}%`,
           transform: `translateX(-50%) scale(${1 / scale})`,
+          paddingLeft: 7.5,
         }}
       >
-        <i className={sx.icon} style={{ backgroundColor: "#fff" }} />
+        <i className={sx.icon}>
+          <System />
+        </i>
         <span className={sx.label}>{props.data.name}</span>
       </button>
     </Link>
