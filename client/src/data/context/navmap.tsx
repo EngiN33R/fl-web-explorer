@@ -33,7 +33,7 @@ interface INavMapContext {
   mode: NavMapMode;
   setMode: (mode: NavMapMode) => void;
   search: (query: string, mode?: NavMapMode) => void;
-  findPath: (from: string, to: string) => void;
+  findPath: (from: string | undefined, to: string | undefined) => void;
 }
 
 const NavMapContext = createContext<INavMapContext>({
@@ -81,8 +81,6 @@ export function useObjectData() {
 export function NavMapProvider({ children }: { children: React.ReactNode }) {
   const { data: system } = useSystemData();
   const { data: object } = useObjectData();
-
-  console.log(history.state);
 
   const [mode, setModeRaw] = useState<NavMapMode>(
     history.state?.navmapMode ?? "object"

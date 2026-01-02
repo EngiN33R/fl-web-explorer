@@ -282,7 +282,15 @@ export function BaseTabs({
               <>
                 <h3>Knowledge</h3>
                 {knowledge.map((k) => (
-                  <KnowledgeCard key={k.text} knowledge={k} />
+                  <KnowledgeCard
+                    key={
+                      k.text +
+                      k.npc.name +
+                      k.npc.faction.nickname +
+                      k.object?.nickname
+                    }
+                    knowledge={k}
+                  />
                 ))}
                 <div style={{ height: 8 }} />
               </>
@@ -291,7 +299,14 @@ export function BaseTabs({
               <>
                 <h3>Rumors</h3>
                 {Object.values(uniqueRumors).map((r) => (
-                  <RumorCard key={r.rumor} rumor={r} />
+                  <RumorCard
+                    key={
+                      r.rumor +
+                      r.npcs.map((n) => n.nickname).join(", ") +
+                      r.faction.nickname
+                    }
+                    rumor={r}
+                  />
                 ))}
               </>
             )}
