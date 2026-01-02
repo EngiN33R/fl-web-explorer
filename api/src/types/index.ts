@@ -147,3 +147,21 @@ export type IWaypointRes = NavigationWaypoint & {
     sector: string;
   };
 };
+
+export type INpcRes = {
+  level: number;
+  rank: string;
+  faction: IFaction;
+  ship: IShip;
+  loadout: {
+    equipment: {
+      equipment: IEquipment;
+      hardpoint: string;
+    }[];
+    cargo: {
+      equipment: IEquipment;
+      count: number;
+    }[];
+  };
+  pilot: string;
+};

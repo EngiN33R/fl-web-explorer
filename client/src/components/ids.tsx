@@ -8,5 +8,5 @@ export function Ids({ children }: { children: string }) {
         r.json()
       ),
   });
-  return data?.label ?? children;
+  return data?.label?.trim() ?? children;
 }
