@@ -2,6 +2,8 @@ import { Router } from "express";
 import { DataContext } from "fl-node-orm";
 import { deepParseInfocards } from "../util/common";
 import { IniShipGood, IniShipHullGood } from "fl-node-orm/dist/ini-types";
+import { IEquipmentRes } from "../types";
+import { sortBy } from "lodash";
 
 const equipment = DataContext.INSTANCE.entity("equipment");
 const ship = DataContext.INSTANCE.entity("ship");
@@ -16,73 +18,83 @@ router.get("/search", async (req, res) => {
   const hardpoints = req.query.hardpoint
     ? (req.query.hardpoint as string[])
     : undefined;
+  const sources = req.query.sources
+    ? (req.query.sources as string[])
+    : undefined;
 
   const exact = search ? equipment.findAll() : equipment.findByNickname(search);
   if (exact) {
-    res.json([
-      {
-        ...exact,
-        relevance: 1000,
-      },
-    ]);
+    res.json(Array.isArray(exact) ? exact : [exact]);
     return;
   }
 
-  const eligible = equipment.findAll((e) => {
+  let result: IEquipmentRes[] = [];
+
+  for (const e of equipment.findAll()) {
     if (!e.nickname || e.nickname.includes("_rtc")) {
-      return false;
+      continue;
     }
     if (kind && e.kind !== kind) {
-      return false;
+      continue;
     }
     if (hardpoints && !hardpoints.includes(e.hardpoint)) {
-      return false;
+      continue;
+    }
+    const procurement = DataContext.INSTANCE.procurer.getProcurementDetails(
+      e.nickname
+    );
+    if (obtainable && !procurement.length) {
+      continue;
     }
     if (
-      obtainable &&
-      !DataContext.INSTANCE.procurer.getProcurementDetails(e.nickname).length
+      sources &&
+      !sources.some((s) => procurement.some((p) => p.type === s))
     ) {
-      return false;
+      continue;
     }
     const sellingBases = DataContext.INSTANCE.market
       .getSoldAt(e.nickname)
       .map((base) => DataContext.INSTANCE.entity("base").findByNickname(base));
     if (soldBy && !sellingBases.some((b) => b?.faction === soldBy)) {
-      return false;
+      continue;
     }
     if (soldIn && !sellingBases.some((b) => b?.system === soldIn)) {
-      return false;
+      continue;
     }
     if (soldAt && !sellingBases.some((b) => b?.nickname === soldAt)) {
-      return false;
+      continue;
     }
-    return true;
-  });
-  const relevance = eligible.map((e, idx) => [
-    idx,
-    [
-      e.name.toLowerCase().replace("the", "").trim().startsWith(search) ? 3 : 0,
-      e.name.toLowerCase().includes(search) ? 2 : 1,
-      typeof e.nickname === "string" &&
-      e.nickname?.toLowerCase().includes(search)
-        ? 0.5
-        : 0,
-      e.infocard.toLowerCase().includes(search) ? 0.5 : 0,
-    ]
-      .map(Number)
-      .reduce((a, b) => a + b, 0),
-  ]);
+    let relevance = 0;
+    if (search) {
+      if (e.name.toLowerCase().replace("the", "").trim().startsWith(search)) {
+        relevance += 3;
+      }
+      if (e.name.toLowerCase().includes(search)) {
+        relevance += 2;
+      }
+      if (
+        typeof e.nickname === "string" &&
+        e.nickname?.toLowerCase().includes(search)
+      ) {
+        relevance += 0.5;
+      }
+      if (e.infocard.toLowerCase().includes(search)) {
+        relevance += 0.5;
+      }
+      if (relevance === 0) {
+        continue;
+      }
+    }
+    result.push(
+      deepParseInfocards({
+        ...e,
+        obtainable: procurement,
+        relevance,
+      })
+    );
+  }
 
-  let result = relevance
-    .filter((r) => r[1])
-    .sort((a, b) => b[1] - a[1])
-    .map((r) => {
-      const body = eligible[r[0]];
-      return deepParseInfocards({
-        ...body,
-        relevance: r[1],
-      });
-    });
+  result = sortBy(result, "relevance").reverse();
   if (limit !== "0") {
     result = result.slice(0, Number(limit || "50"));
   }

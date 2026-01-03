@@ -1,3 +1,17 @@
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  66% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
 .loadouts {
   height: 100%;
   flex: 1;
@@ -54,11 +68,16 @@
           &.active {
             border-color: #ffffff;
           }
+          &.pending {
+            & > button {
+              animation: 1.5s infinite forwards blink;
+            }
+          }
 
           & > button {
             background: none;
             border: none;
-            padding: 8px;
+            padding: 4px 8px;
             margin: 0;
             width: 100%;
             text-align: left;
@@ -86,7 +105,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-width: 350px;
+      width: 350px;
 
       h3 {
         margin: 0;
@@ -99,7 +118,7 @@
       }
 
       li {
-        height: 23px;
+        line-height: 23.5px;
       }
 
       .delta {
@@ -108,6 +127,9 @@
         }
         &.negative {
           color: #f00;
+        }
+        &.neutral {
+          color: #fb8;
         }
       }
     }
@@ -121,8 +143,7 @@
     width: 500px;
     background-color: #2f2f2f;
     height: 100%;
-    display: flex;
-    flex-direction: column;
+    border-left: 1px solid #444444;
 
     .actions {
       position: absolute;
@@ -139,14 +160,21 @@
         margin: 0;
         width: 32px;
         height: 32px;
-        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
 
+        &:not(.disabled) {
+          cursor: pointer;
+        }
+        &.disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
         &.accept {
           font-size: 120%;
-          &:hover::after {
+          &:hover:not(.disabled)::after {
             color: #6f6;
           }
 
@@ -175,6 +203,15 @@
     .detail {
       flex: 1;
       overflow-y: auto;
+
+      .center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #888888;
+        user-select: none;
+      }
     }
 
     .search {
@@ -201,7 +238,7 @@
         min-height: 0;
         overflow-y: auto;
 
-        button {
+        button.row {
           background: none;
           border: none;
           padding: 4px 4px 4px 12px;
@@ -209,13 +246,21 @@
           width: 100%;
           text-align: left;
           cursor: pointer;
+          display: table-row;
 
           &.active {
             background: #08f5;
           }
 
-          &:hover {
-            background: #08f5;
+          &:not(.active):hover {
+            background: #08f3;
+          }
+
+          .name {
+            display: table-cell;
+            .caption {
+              font-size: 80%;
+            }
           }
         }
       }

@@ -8,6 +8,7 @@ import type {
   ISystem,
   IZone,
   NavigationWaypoint,
+  ProcurementDetails,
 } from "fl-node-orm";
 
 type BitmaskJSON<B extends Bitmask<string> | undefined> =
@@ -168,4 +169,8 @@ export type INpcRes = {
 
 export type IShipRes = IShip & {
   loadout: Record<string, IEquipment>;
+};
+
+export type IEquipmentRes = IEquipment & {
+  obtainable: ProcurementDetails[];
 };

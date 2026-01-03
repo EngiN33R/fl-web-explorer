@@ -1,7 +1,8 @@
 @font-face {
   font-family: "Agency FB";
   src: url("/agencyfbv2.eot");
-  src: url("/agencyfbv2.eot") format("embedded-opentype"),
+  src:
+    url("/agencyfbv2.eot") format("embedded-opentype"),
     url("/agencyfbv2.woff2") format("woff2"),
     url("/agencyfbv2.woff") format("woff"),
     url("/agencyfbv2.ttf") format("truetype"),
@@ -30,11 +31,58 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 }
 
 #root {
   height: 100vh;
+}
+
+button.multiselect {
+  position: relative;
+  border: none;
+  background-color: #2f2f2f;
+  cursor: pointer;
+  padding: 0 8px;
+
+  &::after {
+    content: "⌃";
+    transform: scaleY(-1);
+    width: 16px;
+    height: 14px;
+    text-align: start;
+    padding-left: 8px;
+    display: inline-block;
+  }
+}
+
+.options[role="listbox"] {
+  background-color: #2f2f2f;
+
+  &.multiselect {
+    .option {
+      &::before {
+        content: " ";
+        display: inline-block;
+        width: 18px;
+      }
+      &[aria-selected="true"]::before {
+        content: "✓";
+        display: inline-block;
+        width: 18px;
+      }
+    }
+  }
+
+  .option {
+    cursor: pointer;
+    padding: 4px 8px;
+    min-width: 150px;
+
+    &:hover {
+      background-color: #08f3;
+    }
+  }
 }

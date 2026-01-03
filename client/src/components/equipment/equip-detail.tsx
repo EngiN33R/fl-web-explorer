@@ -36,9 +36,9 @@ function Obtainable({ details }: { details: ProcurementDetails }) {
           >
             <Ids>{details.base}</Ids>
           </Link>{" "}
-          in <Ids>{details.system}</Ids> ({credits(details.price)}&nbsp;
-          {details.rep != null ? (
-            <>@&nbsp;&ge;{details.rep.toFixed(2)}&nbsp;rep</>
+          in <Ids>{details.system}</Ids> ({credits(details.price)}
+          {details.rep != null && details.rep > -1 ? (
+            <>&nbsp;@&nbsp;&ge;{details.rep.toFixed(2)}&nbsp;rep</>
           ) : (
             ""
           )}
@@ -55,13 +55,11 @@ function Obtainable({ details }: { details: ProcurementDetails }) {
       return (
         <li>
           Drops from <NpcLoadout nickname={details.loadout} /> (
-          {percentage(details.chance / 100)}&nbsp;chance)
+          {percentage(details.chance)}&nbsp;chance)
         </li>
       );
     case "phantom_loot":
-      return (
-        <li>Drops from any NPC ({percentage(details.chance / 100)} chance)</li>
-      );
+      return <li>Drops from any NPC ({percentage(details.chance)} chance)</li>;
     case "wreck_loot":
       return (
         <li>

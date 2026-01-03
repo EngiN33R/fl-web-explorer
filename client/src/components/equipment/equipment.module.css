@@ -13,3 +13,170 @@
     }
   }
 }
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+
+  .actions {
+    position: absolute;
+    top: 4px;
+    left: -32px;
+    display: flex;
+    flex-direction: column;
+
+    .action {
+      position: relative;
+      border: none;
+      background: #2f2f2f;
+      padding: 0;
+      margin: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:not(.disabled) {
+        cursor: pointer;
+      }
+      &.disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      &.accept {
+        font-size: 120%;
+        &:hover:not(.disabled)::after {
+          color: #6f6;
+        }
+
+        &::after {
+          position: absolute;
+          content: "✓";
+          top: 2px;
+        }
+      }
+
+      &.close {
+        font-size: 160%;
+        &:hover::after {
+          color: #f66;
+        }
+
+        &::after {
+          position: absolute;
+          content: "×";
+          top: -1px;
+        }
+      }
+    }
+  }
+
+  .detail {
+    flex: 1;
+    overflow-y: auto;
+
+    .center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #888888;
+      user-select: none;
+    }
+  }
+
+  .search {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    flex-direction: column;
+    overflow: hidden;
+
+    .toolbar {
+      border-bottom: 1px solid #444444;
+      display: flex;
+
+      input[type="search"] {
+        flex: 1;
+        padding: 8px 4px 8px 12px;
+        border: none;
+        background: #2f2f2f;
+        color: #ffffff;
+        flex-shrink: 0;
+      }
+
+      .multiselect {
+        border-left: 1px solid #444444;
+      }
+    }
+
+    .heading {
+      border-bottom: 1px solid #444444;
+      width: 100%;
+      display: grid;
+
+      button.cell[role="columnheader"] {
+        background: none;
+        border: none;
+        border-right: 1px solid #444444;
+        padding: 4px 4px 4px 12px;
+        margin: 0;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+
+        &:hover {
+          background: #08f3;
+        }
+
+        :global(.sortIcon) {
+          display: flex;
+          align-items: center;
+          margin-left: 4px;
+        }
+      }
+    }
+
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+
+      & > li {
+        width: 100%;
+      }
+
+      button.row {
+        background: none;
+        border: none;
+        margin: 0;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        display: grid;
+
+        &.active {
+          background: #08f5;
+        }
+
+        &:not(.active):hover {
+          background: #08f3;
+        }
+
+        .cell {
+          padding: 4px 4px 4px 12px;
+        }
+
+        .caption {
+          font-size: 80%;
+        }
+      }
+    }
+  }
+}

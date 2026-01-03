@@ -2,12 +2,12 @@ import { IEquipment, IShip } from "fl-node-orm";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useReducer, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { EquipmentDetail } from "@/components/equipment/equip-detail";
 import { groupBy } from "lodash";
 import { Ids } from "@/components/ids";
 import sx from "./loadouts.module.css";
 import { decimal, percentage } from "@/util";
 import { IShipRes } from "@api/types";
+import { EquipmentDrawer } from "@/components/equipment/drawer";
 
 export const Route = createFileRoute("/loadouts/")({
   component: LoadoutsView,
@@ -42,28 +42,6 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
       IEquipment[]
     >;
 
-    const totalMass = equipment.reduce((acc, e) => acc + e.mass, 0);
-    const powerStats = equipmentGroups.power?.reduce(
-      (acc, e) => {
-        const power = e.power;
-        return {
-          powerTotal: acc.powerTotal + (power?.capacity ?? 0),
-          powerRegen: acc.powerRegen + (power?.chargeRate ?? 0),
-          thrustTotal: acc.thrustTotal + (power?.thrustCapacity ?? 0),
-          thrustRegen: acc.thrustRegen + (power?.thrustChargeRate ?? 0),
-        };
-      },
-      { powerTotal: 0, powerRegen: 0, thrustTotal: 0, thrustRegen: 0 }
-    );
-    const thrusterStats = equipmentGroups.thruster?.reduce(
-      (acc, e) => {
-        acc.thrustSpeed += e.thruster?.speed ?? 0;
-        acc.thrustPower += e.thruster?.powerUsage ?? 0;
-        return acc;
-      },
-      { thrustSpeed: 0, thrustPower: 0 }
-    );
-
     const damageStats = equipment.reduce(
       (acc, e) => {
         if (
@@ -82,7 +60,11 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         acc.damagePerSecondShield +=
           e[e.kind]!.shieldDamage / e[e.kind]!.refireRate;
         if (e.kind === "gun" || e.kind === "turret") {
-          acc.powerUsage += e[e.kind]!.powerUsage / e[e.kind]!.refireRate;
+          acc.weaponPowerPerSecond +=
+            e[e.kind]!.powerUsage / e[e.kind]!.refireRate;
+          acc.damageTotalByType[e[e.kind]!.damageType] =
+            (acc.damageTotalByType[e[e.kind]!.damageType] ?? 0) +
+            e[e.kind]!.shieldDamage;
         }
         return acc;
       },
@@ -91,64 +73,142 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         damageTotalShield: 0,
         damagePerSecondHull: 0,
         damagePerSecondShield: 0,
-        powerUsage: 0,
+        weaponPowerPerSecond: 0,
+        damageTotalByType: {} as Record<string, number>,
       }
     );
-    const shieldStats = equipmentGroups.shield?.reduce(
+
+    const powerStats = (equipmentGroups.power ?? []).reduce(
+      (acc, e) => {
+        const power = e.power;
+        return {
+          powerTotal: acc.powerTotal + (power?.capacity ?? 0),
+          powerRegen: acc.powerRegen + (power?.chargeRate ?? 0),
+          thrustTotal: acc.thrustTotal + (power?.thrustCapacity ?? 0),
+          thrustRegen: acc.thrustRegen + (power?.thrustChargeRate ?? 0),
+        };
+      },
+      { powerTotal: 0, powerRegen: 0, thrustTotal: 0, thrustRegen: 0 }
+    );
+    const thrusterStats = (equipmentGroups.thruster ?? []).reduce(
+      (acc, e) => {
+        acc.thrustForce += e.thruster?.maxForce ?? 0;
+        acc.thrustPower += e.thruster?.powerUsage ?? 0;
+        return acc;
+      },
+      { thrustForce: 0, thrustPower: 0 }
+    );
+    const engineStats = (equipmentGroups.engine ?? []).reduce(
+      (acc, e) => {
+        acc.engineForce += e.engine?.maxForce ?? 0;
+        acc.engineLinearDrag += e.engine?.linearDrag ?? 0;
+        return acc;
+      },
+      { engineForce: 0, engineLinearDrag: 0 }
+    );
+    const shieldStats = (equipmentGroups.shield ?? []).reduce(
       (acc, e) => {
         acc.shieldCapacity += e.shield?.capacity ?? 0;
         acc.shieldRegen += e.shield?.regeneration ?? 0;
+        acc.shieldRebuildTime += e.shield?.rebuildTime ?? 0;
+        acc.shieldConstantPowerUsage += e.shield?.constantPowerUsage ?? 0;
+        acc.shieldRebuildPowerUsage += e.shield?.rebuildPowerUsage ?? 0;
+        acc.shieldResistances = {
+          ...acc.shieldResistances,
+          ...e.shield?.resistances,
+        };
         return acc;
       },
-      { shieldCapacity: 0, shieldRegen: 0 }
+      {
+        shieldCapacity: 0,
+        shieldRegen: 0,
+        shieldRebuildTime: 0,
+        shieldConstantPowerUsage: 0,
+        shieldRebuildPowerUsage: 0,
+        shieldResistances: {} as Record<string, number>,
+      }
     );
 
+    const shieldMaxPowerUsage =
+      shieldStats.shieldConstantPowerUsage +
+      shieldStats.shieldRebuildPowerUsage;
     const powerBalance =
-      (powerStats?.powerRegen ?? 0) - (damageStats?.powerUsage ?? 0);
+      powerStats.powerRegen -
+      damageStats.weaponPowerPerSecond -
+      shieldMaxPowerUsage;
+    const timeToDischarge =
+      powerBalance > 0 ? Infinity : powerStats.powerTotal / -powerBalance;
+
+    const totalMass =
+      (loadout.ship?.mass ?? 0) + equipment.reduce((acc, e) => acc + e.mass, 0);
+    const totalLinearDrag =
+      (loadout.ship?.linearDrag ?? 0) + engineStats.engineLinearDrag;
+    const maxSpeed = engineStats.engineForce / totalLinearDrag;
+    const totalThrustForce =
+      equipmentGroups.thruster?.reduce(
+        (acc, e) => acc + (e.thruster?.maxForce ?? 0),
+        0
+      ) ?? 0;
+    const thrustSpeed = totalThrustForce / totalLinearDrag;
+
+    const totalHitPoints =
+      (loadout.ship?.hitPoints ?? 0) *
+      (equipmentGroups.armor?.reduce((acc, e) => acc + e.armor!.scale, 0) ?? 1);
 
     return {
-      totalMass,
-      damageTotalHull: damageStats.damageTotalHull ?? 0,
-      damageTotalShield: damageStats.damageTotalShield ?? 0,
-      damagePerSecondHull: damageStats.damagePerSecondHull ?? 0,
-      damagePerSecondShield: damageStats.damagePerSecondShield ?? 0,
+      ...damageStats,
+      ...shieldStats,
+      shieldMaxPowerUsage,
+      ...powerStats,
+      thrustSpeed,
+      thrustBalance: powerStats.thrustRegen - thrusterStats.thrustPower,
       powerBalance,
-      powerTotal: powerStats?.powerTotal ?? 0,
-      powerRegen: powerStats?.powerRegen ?? 0,
-      shieldCapacity: shieldStats?.shieldCapacity ?? 0,
-      shieldRegen: shieldStats?.shieldRegen ?? 0,
-      thrustTotal: powerStats?.thrustTotal ?? 0,
-      thrustRegen: powerStats?.thrustRegen ?? 0,
-      thrustSpeed: thrusterStats?.thrustSpeed ?? 0,
-      thrustBalance:
-        (powerStats?.thrustRegen ?? 0) - (thrusterStats?.thrustPower ?? 0),
+      timeToDischarge,
+      totalHitPoints,
+      maxSpeed,
+      totalMass,
     };
   }, [loadout?.equipment]);
 };
 
 type LoadoutStats = NonNullable<ReturnType<typeof useLoadoutStats>>;
 
-function Delta({
+function Delta<K extends keyof LoadoutStats>({
   current,
   next,
   prop,
   inverse,
+  neutral,
   children,
 }: {
   current?: LoadoutStats;
   next?: LoadoutStats;
-  prop: keyof LoadoutStats;
+  prop: K;
   inverse?: boolean;
-  children: (value: number, stats: LoadoutStats) => React.ReactNode;
+  neutral?: boolean;
+  children: (value: LoadoutStats[K], stats: LoadoutStats) => React.ReactNode;
 }) {
-  const delta = next ? next[prop] - (current?.[prop] ?? 0) : undefined;
+  if (neutral) {
+    const different =
+      !!next &&
+      JSON.stringify(next?.[prop]) !== JSON.stringify(current?.[prop]);
+    return (
+      <span className={`${sx.delta} ${different ? sx.neutral : ""}`}>
+        {!!current &&
+          children(next?.[prop] ?? current[prop], next ?? current)}{" "}
+      </span>
+    );
+  }
+  const delta = next
+    ? (next[prop] as number) - ((current?.[prop] as number) ?? 0)
+    : undefined;
   return (
     <span
       className={`${sx.delta} ${delta ? ((inverse ? delta < 0 : delta > 0) ? sx.positive : sx.negative) : ""}`}
     >
       {!!current && children(next?.[prop] ?? current[prop], next ?? current)}{" "}
       {!!delta &&
-        `${delta > 0 ? "+" : "-"}${current?.[prop] === 0 ? "100%" : percentage(Math.abs(next![prop] / current![prop] - 1))}`}
+        `${delta > 0 ? "+" : "-"}${current?.[prop] === 0 ? "100%" : percentage(Math.abs((next![prop] as number) / (current![prop] as number) - 1))}`}
     </span>
   );
 }
@@ -185,26 +245,11 @@ function LoadoutsView() {
     loadout.ship?.hardpoints
       .filter((hp) => hp.id === hardpoint)
       .map((hp) => hp.type) ?? [];
-  const [search, setSearch] = useState("");
 
   const { data: ships } = useQuery<IShipRes[]>({
     queryKey: ["ships"],
     queryFn: () =>
       fetch(`${import.meta.env.VITE_API_URL}/equip/ship`).then((r) => r.json()),
-  });
-
-  const { data: equipment } = useQuery<IEquipment[]>({
-    queryKey: ["equipment", JSON.stringify(equipmentTypes)],
-    queryFn: async ({ queryKey }) => {
-      const hardpoint = queryKey[1] as string | undefined;
-      if (!hardpoint) {
-        return [];
-      }
-      const result = await fetch(
-        `${import.meta.env.VITE_API_URL}/equip/search?${equipmentTypes.map((type) => `hardpoint[]=${type}`).join("&")}&obtainable=true&limit=0`
-      );
-      return result.json();
-    },
   });
 
   const currentStats = useLoadoutStats(loadout);
@@ -216,8 +261,9 @@ function LoadoutsView() {
         }
       : undefined
   );
-  const active =
-    selected ?? (hardpoint ? loadout.equipment[hardpoint] : undefined);
+  const stats = hoverStats ?? currentStats;
+  const mounted = hardpoint ? loadout.equipment[hardpoint] : undefined;
+  const active = selected ?? mounted;
 
   return (
     <article className={sx.loadouts}>
@@ -249,17 +295,20 @@ function LoadoutsView() {
               ([id, hps]) => (
                 <li
                   key={id}
-                  className={`${sx.hardpoint} ${hardpoint === id ? sx.active : ""}`}
+                  className={`${sx.hardpoint} ${hardpoint === id ? sx.active : ""} ${hardpoint === id && active?.nickname !== loadout.equipment[id]?.nickname ? sx.pending : ""}`}
                 >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
+                      setSelected(undefined);
                       setHardpoint(id);
                     }}
                   >
                     <div className={sx.name}>
-                      {loadout.equipment[id]?.name ?? "Empty"}
+                      {(hardpoint === id
+                        ? active?.name
+                        : loadout.equipment[id]?.name) ?? "Empty"}
                     </div>
                     <div className={sx.caption}>
                       <Ids>{hps[0].type}</Ids>
@@ -313,6 +362,41 @@ function LoadoutsView() {
             </Delta>
           </li>
           <li>
+            <strong>DMG Profile: </strong>
+            <Delta
+              current={currentStats}
+              next={hoverStats}
+              prop="damageTotalByType"
+              neutral
+            >
+              {(value) => {
+                const damageTotalByType = Object.entries(value ?? {}).filter(
+                  ([type, damage]) => !type.includes("proto") && damage !== 0
+                );
+                return damageTotalByType.length
+                  ? damageTotalByType.map(([type, damage], idx) => (
+                      <>
+                        {percentage(damage / stats!.damageTotalShield)}&nbsp;
+                        <Ids>{type}</Ids>
+                        {idx < damageTotalByType.length - 1 ? ", " : ""}
+                      </>
+                    ))
+                  : "None";
+              }}
+            </Delta>
+          </li>
+          <hr />
+          <li>
+            <strong>Hit Points: </strong>
+            <Delta
+              current={currentStats}
+              next={hoverStats}
+              prop="totalHitPoints"
+            >
+              {(value) => decimal(value)}
+            </Delta>
+          </li>
+          <li>
             <strong>Shield Capacity: </strong>
             <Delta
               current={currentStats}
@@ -329,6 +413,42 @@ function LoadoutsView() {
             </Delta>
           </li>
           <li>
+            <strong>Shield DMG Mult: </strong>
+            <Delta
+              current={currentStats}
+              next={hoverStats}
+              prop="shieldResistances"
+              neutral
+            >
+              {(value) => {
+                const shieldDmgMults = Object.entries(value ?? {}).filter(
+                  ([type, mult]) =>
+                    !type.includes("proto") && mult !== 1 && mult !== 0
+                );
+                return shieldDmgMults.length
+                  ? shieldDmgMults.map(([type, resistance], idx) => (
+                      <>
+                        {percentage(resistance)}&nbsp;<Ids>{type}</Ids>
+                        {idx < shieldDmgMults.length - 1 ? ", " : ""}
+                      </>
+                    ))
+                  : "None";
+              }}
+            </Delta>
+          </li>
+          <li>
+            <strong>Shield Rebuild Time: </strong>
+            <Delta
+              current={currentStats}
+              next={hoverStats}
+              prop="shieldRebuildTime"
+              inverse
+            >
+              {(value) => `${decimal(value)}s`}
+            </Delta>
+          </li>
+          <hr />
+          <li>
             <strong>Power Capacity: </strong>
             <Delta current={currentStats} next={hoverStats} prop="powerTotal">
               {(value) => decimal(value)}
@@ -343,11 +463,20 @@ function LoadoutsView() {
           <li>
             <strong>Power Balance: </strong>
             <Delta current={currentStats} next={hoverStats} prop="powerBalance">
-              {(value, stats) =>
-                `${decimal(value)}/s (${value >= 0 ? "∞" : decimal((stats?.powerTotal ?? 0) / -(stats?.powerBalance ?? 0)) + "s"})`
-              }
+              {(value) => `${decimal(value)}/s`}
             </Delta>
           </li>
+          <li>
+            <strong>Time to Discharge: </strong>
+            <Delta
+              current={currentStats}
+              next={hoverStats}
+              prop="timeToDischarge"
+            >
+              {(value) => (value == Infinity ? "∞" : `${decimal(value)}s`)}
+            </Delta>
+          </li>
+          <hr />
           <li>
             <strong>Thruster Speed: </strong>
             <Delta current={currentStats} next={hoverStats} prop="thrustSpeed">
@@ -379,6 +508,12 @@ function LoadoutsView() {
             </Delta>
           </li>
           <li>
+            <strong>Max Speed: </strong>
+            <Delta current={currentStats} next={hoverStats} prop="maxSpeed">
+              {(value) => `${decimal(value)} m/s`}
+            </Delta>
+          </li>
+          <li>
             <strong>Mass: </strong>
             <Delta
               current={currentStats}
@@ -392,67 +527,24 @@ function LoadoutsView() {
         </ul>
       </section>
       {hardpoint && (
-        <aside className={sx.drawer}>
-          <div className={sx.actions}>
-            <button
-              className={`${sx.action} ${sx.accept}`}
-              onClick={() => {
-                if (hardpoint && active) {
-                  dispatchLoadout({
-                    type: "set_equipment",
-                    hardpointId: hardpoint,
-                    equipment: active,
-                  });
-                  setHardpoint(undefined);
-                  setSelected(undefined);
-                  setSearch("");
-                }
-              }}
-            />
-            <button
-              className={`${sx.action} ${sx.close}`}
-              onClick={() => {
-                setHardpoint(undefined);
-                setSelected(undefined);
-                setSearch("");
-              }}
-            />
-          </div>
-          {active && (
-            <EquipmentDetail className={sx.detail} nickname={active.nickname} />
-          )}
-          <div className={sx.search}>
-            <input
-              type="search"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <ul className={sx.list}>
-              {equipment
-                ?.filter(
-                  (e) =>
-                    !search ||
-                    e.name.toLowerCase().includes(search.toLowerCase())
-                )
-                ?.map((e) => (
-                  <li key={e.nickname}>
-                    <button
-                      className={
-                        active?.nickname === e.nickname ? sx.active : ""
-                      }
-                      onClick={() => {
-                        setSelected(e);
-                      }}
-                    >
-                      <div className={sx.name}>{e.name}</div>
-                      <div className={sx.caption}>{e.nickname}</div>
-                    </button>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        </aside>
+        <EquipmentDrawer
+          className={sx.drawer}
+          onClose={() => {
+            setHardpoint(undefined);
+            setSelected(undefined);
+          }}
+          onSelect={(e) => setSelected(e)}
+          onConfirm={(e) =>
+            dispatchLoadout({
+              type: "set_equipment",
+              hardpointId: hardpoint,
+              equipment: e,
+            })
+          }
+          value={active}
+          acceptDisabled={active?.nickname === mounted?.nickname}
+          types={equipmentTypes}
+        />
       )}
     </article>
   );
