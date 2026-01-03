@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { DataContext } from "fl-node-orm";
 import { deepParseInfocards } from "../util/common";
+import { IniShipGood, IniShipHullGood } from "fl-node-orm/dist/ini-types";
 
 const equipment = DataContext.INSTANCE.entity("equipment");
 const ship = DataContext.INSTANCE.entity("ship");
@@ -91,9 +92,39 @@ router.get("/search", async (req, res) => {
 router.get("/ship", (req, res) => {
   const ships = ship.findAll();
   // console.log(ships.filter((s) => s.name.toLowerCase().includes("falcon")));
-  const available = ships.filter(
-    (s) => DataContext.INSTANCE.market.getSoldAt(s.nickname).length > 0
-  );
+  const available = ships
+    .filter((s) => DataContext.INSTANCE.market.getSoldAt(s.nickname).length > 0)
+    .map((s) => {
+      const shipHull = DataContext.INSTANCE.ini<{ good: IniShipHullGood }>(
+        "goods"
+      )?.findFirst(
+        "good",
+        (g) => g.get("category") === "shiphull" && g.get("ship") === s.nickname
+      );
+      const shipPackage = DataContext.INSTANCE.ini<{ good: IniShipGood }>(
+        "goods"
+      )?.findFirst(
+        "good",
+        (g) =>
+          g.get("category") === "ship" &&
+          g.get("hull") === shipHull?.get("nickname")
+      );
+      const addons =
+        shipPackage?.asArray("addon", true).map((a) => ({
+          equipment: equipment.findByNickname(a[0]),
+          hardpoint: a[1],
+          count: a[2],
+        })) ?? [];
+      return {
+        ...s,
+        loadout: Object.fromEntries(
+          s.hardpoints.map((hp) => [
+            hp.id,
+            addons.find((a) => a.hardpoint === hp.id)?.equipment,
+          ])
+        ),
+      };
+    });
   res.json(available);
 });
 

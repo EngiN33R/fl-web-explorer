@@ -165,3 +165,7 @@ export type INpcRes = {
   };
   pilot: string;
 };
+
+export type IShipRes = IShip & {
+  loadout: Record<string, IEquipment>;
+};

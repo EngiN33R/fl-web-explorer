@@ -10,12 +10,21 @@ const percentageFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+const decimalFormatter = new Intl.NumberFormat("en-US", {
+  style: "decimal",
+  maximumFractionDigits: 2,
+});
+
 export function credits(amount: number) {
   return moneyFormatter.format(amount);
 }
 
 export function percentage(amount: number) {
   return percentageFormatter.format(amount);
+}
+
+export function decimal(amount: number) {
+  return decimalFormatter.format(amount);
 }
 
 export function time(seconds: number) {
