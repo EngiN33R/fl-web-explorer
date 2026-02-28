@@ -202,7 +202,7 @@ function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
   }
   const [relW, relH] = useRelSize([width, height], size);
   const rotation = data.rotate?.[1] ? -data.rotate[1] : 0;
-  let zIndex = relW >= 90 ? 2 : 3;
+  let zIndex = relW >= 90 || !data.name ? 2 : 3;
   let borderColor = data.fogColor ?? "#888";
   if (data.damage) {
     borderColor = "#f00";
