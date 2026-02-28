@@ -30,13 +30,13 @@ export const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
   "hazard_buoy",
-  "wplatform",
+  // "wplatform",
   "docking_fixture",
-  "com_sat",
-  /^depot_.+/,
-  /^wplatform_.+/,
-  /^space_tank.+/,
-  /^track_ring.+/,
+  // "com_sat",
+  // /^depot_.+/,
+  // /^wplatform_.+/,
+  // /^space_tank.+/,
+  // /^track_ring.+/,
 ];
 
 const objectFilter = (o: IObjectRes) =>

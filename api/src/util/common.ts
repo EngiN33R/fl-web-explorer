@@ -56,13 +56,13 @@ function getMissionRewardRange(min: number, max: number) {
 export const IGNORED_ARCHETYPES = [
   "trade_lane_ring",
   "nav_buoy",
-  "wplatform",
-  "small_wplatform",
-  "space_tank",
+  // "wplatform",
+  // "small_wplatform",
+  // "space_tank",
   "dock_ring",
   "docking_fixture",
-  /depot_.+/,
-  "track_ring",
+  // /depot_.+/,
+  // "track_ring",
 ];
 
 export const serializeSystem = (body: ISystem): ISystemRes => {
