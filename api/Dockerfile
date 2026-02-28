@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=build /app/api/dist ./dist
 
 # Install only the runtime external dependency
-RUN npm init -y && npm install --save @imagemagick/magick-wasm@0.0.34
+RUN npm init -y && npm install --save @imagemagick/magick-wasm@0.0.34 jsdom@26
 
 ENV PORT=3000
 EXPOSE 3000
