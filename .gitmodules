@@ -1,0 +1,3 @@
+[submodule "fl-node-orm"]
+	path = fl-node-orm
+	url = git@github.com:EngiN33R/fl-node-orm.git
