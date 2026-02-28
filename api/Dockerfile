@@ -26,6 +26,8 @@ RUN pnpm --filter fl-web-explorer-api run build
 # --- Production stage ---
 FROM node:22-alpine
 
+RUN apk add --no-cache imagemagick
+
 WORKDIR /app
 
 # Copy bundled output
