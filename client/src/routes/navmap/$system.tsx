@@ -184,7 +184,12 @@ function Zone({ data, system }: { data: IZoneRes; system: ISystemRes }) {
   let width = 0;
   let height = 0;
   if (data.shape === "sphere") {
-    width = height = (data.size as number) * 2;
+    if (typeof data.size === "number") {
+      width = height = (data.size as number) * 2;
+    } else {
+      width = (data.size as number[])[0] * 2;
+      height = (data.size as number[])[2] * 2;
+    }
   } else if (data.shape === "cylinder") {
     width = (data.size as number[])[1];
     height = (data.size as number[])[0];
