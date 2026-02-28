@@ -352,7 +352,7 @@ function RouteComponent() {
   const { scale } = useTransformState();
   const containerRef = useRef<HTMLDivElement>(null);
   const [labelOffsets, setLabelOffsets] = useState<Map<string, number>>(
-    new Map()
+    new Map(),
   );
   const previousOffsetsRef = useRef<string>("");
 
@@ -388,14 +388,15 @@ function RouteComponent() {
         iconRect: DOMRect;
         labelWidth: number;
         labelHeight: number;
+        labelLeft: number;
+        labelRight: number;
         baseLabelTop: number; // Position without offset
-        yPos: number;
       }> = [];
 
       // First, temporarily reset all label offsets to get base positions
       allNodes.forEach(({ nickname }) => {
         const nodeEl = containerRef.current?.querySelector(
-          `[data-nickname="${nickname}"][data-type="object"]`
+          `[data-nickname="${nickname}"][data-type="object"]`,
         ) as HTMLElement;
         if (!nodeEl) return;
 
@@ -421,8 +422,9 @@ function RouteComponent() {
             iconRect,
             labelWidth: labelRect.width,
             labelHeight: labelRect.height,
+            labelLeft: labelRect.left,
+            labelRight: labelRect.right,
             baseLabelTop,
-            yPos: iconRect.top,
           });
 
           // Restore original marginTop
@@ -430,66 +432,62 @@ function RouteComponent() {
         }
       });
 
-      // Sort by Y position (top to bottom)
-      nodeElements.sort((a, b) => a.yPos - b.yPos);
-
-      // Calculate offsets iteratively until convergence
-      let changed = true;
+      // Iterative bidirectional overlap resolution (adapted from Navmap)
+      // Each label is checked against ALL others; the lower label gets pushed down.
+      // Tracks total movement per iteration; stops when a pass produces zero movement.
+      const diffHistory: (number | undefined)[] = [undefined, undefined];
       let iterations = 0;
-      const maxIterations = 20;
+      const maxIterations = 8;
 
-      while (changed && iterations < maxIterations) {
-        changed = false;
-        iterations++;
+      while (diffHistory[0] !== 0 && iterations < maxIterations) {
+        let diffSum = 0;
 
         for (let i = 0; i < nodeElements.length; i++) {
           const current = nodeElements[i];
-          const currentOffset = offsets.get(current.nickname) ?? 0;
-          const currentLabelTop = current.baseLabelTop + currentOffset;
-          const currentLabelBottom = currentLabelTop + current.labelHeight;
-          let maxOffset = currentOffset;
 
-          // Check against all nodes above
-          for (let j = 0; j < i; j++) {
+          for (let j = 0; j < nodeElements.length; j++) {
+            if (i === j) continue;
             const other = nodeElements[j];
+
+            // Get current computed positions
+            const currentOffset = offsets.get(current.nickname) ?? 0;
             const otherOffset = offsets.get(other.nickname) ?? 0;
-            const otherIconBottom = other.iconRect.bottom;
+
+            const currentLabelTop = current.baseLabelTop + currentOffset;
+            const currentLabelBottom = currentLabelTop + current.labelHeight;
             const otherLabelTop = other.baseLabelTop + otherOffset;
             const otherLabelBottom = otherLabelTop + other.labelHeight;
 
-            // Check horizontal overlap
-            const horizontalOverlap =
-              current.iconRect.left < other.iconRect.right &&
-              current.iconRect.right > other.iconRect.left;
-
-            if (!horizontalOverlap) continue;
-
-            // Check if current label overlaps with other icon
-            // Label overlaps icon if: label top < icon bottom AND label bottom > icon top
-            const otherIconTop = other.iconRect.top;
+            // AABB overlap check using actual label bounding boxes
+            // Horizontal: no overlap if one is entirely left/right of the other
             if (
-              currentLabelTop < otherIconBottom &&
-              currentLabelBottom > otherIconTop
-            ) {
-              const overlap = otherIconBottom - currentLabelTop;
-              maxOffset = Math.max(maxOffset, currentOffset + overlap + 2);
-            }
-
-            // Check if current label overlaps with other label
+              current.labelRight <= other.labelLeft ||
+              current.labelLeft >= other.labelRight
+            )
+              continue;
+            // Vertical: no overlap if one is entirely above/below the other
             if (
-              currentLabelTop < otherLabelBottom &&
-              currentLabelBottom > otherLabelTop
-            ) {
+              currentLabelBottom <= otherLabelTop ||
+              currentLabelTop >= otherLabelBottom
+            )
+              continue;
+
+            // Labels overlap — push the lower one down
+            if (currentLabelTop <= otherLabelTop) {
+              const overlap = currentLabelBottom - otherLabelTop;
+              offsets.set(other.nickname, otherOffset + overlap + 2);
+              diffSum += overlap;
+            } else {
               const overlap = otherLabelBottom - currentLabelTop;
-              maxOffset = Math.max(maxOffset, currentOffset + overlap + 2);
+              offsets.set(current.nickname, currentOffset + overlap + 2);
+              diffSum += overlap;
             }
-          }
-
-          if (maxOffset !== currentOffset) {
-            offsets.set(current.nickname, maxOffset);
-            changed = true;
           }
         }
+
+        diffHistory.unshift(diffSum);
+        diffHistory.pop();
+        iterations++;
       }
 
       const offsetsStr = JSON.stringify(Array.from(offsets.entries()).sort());
@@ -543,7 +541,7 @@ function RouteComponent() {
           ))}
         {waypoints
           ?.filter(
-            (w) => w.type !== "jump" && w.from.system === system?.nickname
+            (w) => w.type !== "jump" && w.from.system === system?.nickname,
           )
           .flatMap((data) => [
             <NavSegment
@@ -573,7 +571,7 @@ function RouteComponent() {
             object && object.type !== "system" && object.type !== "zone"
               ? toRelPos<[number, number, number]>(
                   object?.position ?? [0, 0, 0],
-                  system?.size ?? 1
+                  system?.size ?? 1,
                 )
               : undefined
           }

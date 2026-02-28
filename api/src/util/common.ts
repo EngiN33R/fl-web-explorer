@@ -21,7 +21,7 @@ function getOptionalObject(nickname: string | undefined) {
     DataContext.INSTANCE.findByNickname("base", nickname) ||
     DataContext.INSTANCE.findByNickname("zone", nickname) ||
     DataContext.INSTANCE.entity("base").findFirst(
-      (b) => b.objectNickname === nickname
+      (b) => b.objectNickname === nickname,
     );
   return exact;
 }
@@ -40,7 +40,7 @@ function getKnowledgeMapObjects(ids: number) {
         name: o!.name,
         type: o!.type,
       })),
-    "nickname"
+    "nickname",
   );
 }
 
@@ -108,8 +108,8 @@ export const serializeSystem = (body: ISystem): ISystemRes => {
         {} as Record<
           string,
           { system: string; type: "jumpgate" | "jumphole" | "both" }
-        >
-      )
+        >,
+      ),
     ),
     zones: body.zones.map((z) => serializeObject(z)),
     objects: body.objects.map((o) => serializeObject(o)),
@@ -122,21 +122,21 @@ export const fetchBarData = (body: IBase) => {
     "mbase",
     (e) => {
       return e.nickname === body.nickname;
-    }
+    },
   );
   let bar: any;
   if (mbase && mbase[0]) {
     const factions = mbase[1].filter((s) => s.name === "basefaction");
     const totalMissionWeight = factions.reduce(
       (acc, s) => acc + ((s.raw.mission_type as any)?.[3] ?? 0),
-      0
+      0,
     );
     const missions = factions
       .filter((s) => s.raw.mission_type)
       .map((s) => ({
         faction: DataContext.INSTANCE.findByNickname(
           "faction",
-          s.raw.faction as string
+          s.raw.faction as string,
         ),
         difficulty: [
           (s.raw.mission_type as any)[1],
@@ -145,7 +145,7 @@ export const fetchBarData = (body: IBase) => {
         probability: (s.raw.mission_type as any)[3] / totalMissionWeight,
         reward: getMissionRewardRange(
           (s.raw.mission_type as any)[1],
-          (s.raw.mission_type as any)[2]
+          (s.raw.mission_type as any)[2],
         ),
       }));
     const npcNicknames = factions.flatMap((s) => s.asArray("npc"));
@@ -154,16 +154,16 @@ export const fetchBarData = (body: IBase) => {
         (s) =>
           s.name === "gf_npc" &&
           npcNicknames.includes(s.nickname as string) &&
-          s.raw.room === "bar"
+          s.raw.room === "bar",
       )
       .map((npc) => ({
         nickname: npc.nickname,
         name: DataContext.INSTANCE.ids(npc.raw.individual_name as number).split(
-          "\n"
+          "\n",
         )[1],
         faction: DataContext.INSTANCE.findByNickname(
           "faction",
-          npc.raw.affiliation as string
+          npc.raw.affiliation as string,
         ),
         rumors: (
           (npc.asArray("rumor", true) ?? []) as [
@@ -177,7 +177,7 @@ export const fetchBarData = (body: IBase) => {
           reputation:
             r[2] === 1 ? 0.2 : r[2] === 2 ? 0.4 : r[2] === 3 ? 0.6 : 0,
           objects: getKnowledgeMapObjects(r[3]).filter(
-            (b) => b.nickname !== body.nickname
+            (b) => b.nickname !== body.nickname,
           ),
         })),
         knowledge: (
@@ -199,7 +199,7 @@ export const fetchBarData = (body: IBase) => {
         ).map((m) => ({
           faction: DataContext.INSTANCE.findByNickname(
             "faction",
-            npc.raw.affiliation as string
+            npc.raw.affiliation as string,
           ),
           difficulty: [m[1], m[2]],
           reward: getMissionRewardRange(m[1], m[2]),
@@ -224,7 +224,7 @@ export const calculateSector = (object: {
 
   const [x, , z] = object.position;
   const system = DataContext.INSTANCE.entity("system").findByNickname(
-    object.system
+    object.system,
   );
   if (!system) {
     return "N/A";
@@ -336,10 +336,10 @@ export function serializeObject(body: IObject): IObjectRes;
 export function serializeObject(body: IBase): IBaseRes;
 export function serializeObject(body: IZone): IZoneRes;
 export function serializeObject(
-  body: IObject | IBase | IZone
+  body: IObject | IBase | IZone,
 ): IObjectRes | IBaseRes | IZoneRes;
 export function serializeObject(
-  body: IObject | IBase | IZone
+  body: IObject | IBase | IZone,
 ): IObjectRes | IBaseRes | IZoneRes {
   const system = DataContext.INSTANCE.findByNickname("system", body.system);
   const faction =
@@ -356,7 +356,7 @@ export function serializeObject(
   let loadout;
   if ("loadout" in body && body.loadout) {
     const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
-      "loadouts"
+      "loadouts",
     )?.findByNickname("loadout", body.loadout);
     loadout = {
       equipment: iniLoadout
@@ -377,7 +377,7 @@ export function serializeObject(
       ?.get("loadout") as string;
     if (loadoutKey) {
       const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
-        "loadouts"
+        "loadouts",
       )?.findByNickname("loadout", loadoutKey);
       loadout = {
         equipment: iniLoadout
@@ -385,7 +385,7 @@ export function serializeObject(
           .map(([nickname, hardpoint]) => ({
             equipment: DataContext.INSTANCE.findByNickname(
               "equipment",
-              nickname
+              nickname,
             ),
             hardpoint,
           })),
@@ -428,7 +428,7 @@ export function serializeObject(
 }
 
 export const deepParseInfocards = <T extends Record<string, any>>(
-  obj: T
+  obj: T,
 ): T => {
   const result = { ...obj };
   for (const key in result) {
@@ -441,7 +441,7 @@ export const deepParseInfocards = <T extends Record<string, any>>(
             ? convertXmlToHtml(item)
             : typeof item === "object"
               ? deepParseInfocards(item)
-              : item
+              : item,
         );
       } else {
         result[key] = deepParseInfocards(obj[key]);
