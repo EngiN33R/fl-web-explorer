@@ -75,7 +75,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         damagePerSecondShield: 0,
         weaponPowerPerSecond: 0,
         damageTotalByType: {} as Record<string, number>,
-      }
+      },
     );
 
     const powerStats = (equipmentGroups.power ?? []).reduce(
@@ -88,7 +88,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
           thrustRegen: acc.thrustRegen + (power?.thrustChargeRate ?? 0),
         };
       },
-      { powerTotal: 0, powerRegen: 0, thrustTotal: 0, thrustRegen: 0 }
+      { powerTotal: 0, powerRegen: 0, thrustTotal: 0, thrustRegen: 0 },
     );
     const thrusterStats = (equipmentGroups.thruster ?? []).reduce(
       (acc, e) => {
@@ -96,7 +96,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         acc.thrustPower += e.thruster?.powerUsage ?? 0;
         return acc;
       },
-      { thrustForce: 0, thrustPower: 0 }
+      { thrustForce: 0, thrustPower: 0 },
     );
     const engineStats = (equipmentGroups.engine ?? []).reduce(
       (acc, e) => {
@@ -104,7 +104,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         acc.engineLinearDrag += e.engine?.linearDrag ?? 0;
         return acc;
       },
-      { engineForce: 0, engineLinearDrag: 0 }
+      { engineForce: 0, engineLinearDrag: 0 },
     );
     const shieldStats = (equipmentGroups.shield ?? []).reduce(
       (acc, e) => {
@@ -126,7 +126,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
         shieldConstantPowerUsage: 0,
         shieldRebuildPowerUsage: 0,
         shieldResistances: {} as Record<string, number>,
-      }
+      },
     );
 
     const shieldMaxPowerUsage =
@@ -147,9 +147,10 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
     const totalThrustForce =
       equipmentGroups.thruster?.reduce(
         (acc, e) => acc + (e.thruster?.maxForce ?? 0),
-        0
+        0,
       ) ?? 0;
     const thrustSpeed = totalThrustForce / totalLinearDrag;
+    const acceleration = totalThrustForce / totalMass;
 
     const totalHitPoints =
       (loadout.ship?.hitPoints ?? 0) *
@@ -167,6 +168,7 @@ const useLoadoutStats = (loadout: LoadoutState | undefined) => {
       totalHitPoints,
       maxSpeed,
       totalMass,
+      acceleration,
     };
   }, [loadout?.equipment]);
 };
@@ -236,7 +238,7 @@ function LoadoutsView() {
     {
       ship: undefined,
       equipment: {},
-    }
+    },
   );
 
   const [hardpoint, setHardpoint] = useState<string | undefined>();
@@ -259,7 +261,7 @@ function LoadoutsView() {
           ...loadout,
           equipment: { ...loadout.equipment, [hardpoint]: selected },
         }
-      : undefined
+      : undefined,
   );
   const stats = hoverStats ?? currentStats;
   const mounted = hardpoint ? loadout.equipment[hardpoint] : undefined;
@@ -315,7 +317,7 @@ function LoadoutsView() {
                     </div>
                   </button>
                 </li>
-              )
+              ),
             )}
           </ul>
         </div>
@@ -371,7 +373,7 @@ function LoadoutsView() {
             >
               {(value) => {
                 const damageTotalByType = Object.entries(value ?? {}).filter(
-                  ([type, damage]) => !type.includes("proto") && damage !== 0
+                  ([type, damage]) => !type.includes("proto") && damage !== 0,
                 );
                 return damageTotalByType.length
                   ? damageTotalByType.map(([type, damage], idx) => (
@@ -423,7 +425,7 @@ function LoadoutsView() {
               {(value) => {
                 const shieldDmgMults = Object.entries(value ?? {}).filter(
                   ([type, mult]) =>
-                    !type.includes("proto") && mult !== 1 && mult !== 0
+                    !type.includes("proto") && mult !== 1 && mult !== 0,
                 );
                 return shieldDmgMults.length
                   ? shieldDmgMults.map(([type, resistance], idx) => (
@@ -522,6 +524,12 @@ function LoadoutsView() {
               inverse
             >
               {(value) => decimal(value)}
+            </Delta>
+          </li>
+          <li>
+            <strong>Acceleration: </strong>
+            <Delta current={currentStats} next={hoverStats} prop="acceleration">
+              {(value) => `${decimal(value)} m/s²`}
             </Delta>
           </li>
         </ul>
