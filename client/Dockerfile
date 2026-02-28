@@ -5,8 +5,9 @@ RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
 
 WORKDIR /app
 
-# Copy fl-node-orm so the workspace link override resolves from /app
-COPY --from=fl-node-orm . /fl-node-orm
+# Copy and build fl-node-orm so the workspace link override resolves
+COPY --from=fl-node-orm . ./fl-node-orm
+RUN cd fl-node-orm && npm install && npm run build
 
 # Copy workspace root files
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -14,7 +15,7 @@ COPY api/package.json ./api/
 COPY client/package.json ./client/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Copy client source
 COPY client/ ./client/
