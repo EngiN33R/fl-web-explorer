@@ -215,6 +215,56 @@ export const fetchBarData = (body: IBase) => {
   return bar;
 };
 
+export const getLoadout = (body: IObject | IZone | IBase) => {
+  let loadout;
+  if ("archetype" in body) {
+    const loadoutKey = DataContext.INSTANCE.ini("solars")
+      ?.findByNickname("solar", body.archetype)
+      ?.get("loadout") as string;
+    if (loadoutKey) {
+      const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
+        "loadouts",
+      )?.findByNickname("loadout", loadoutKey);
+      loadout = {
+        equipment: iniLoadout
+          ?.asArray("equip", true)
+          .map(([nickname, hardpoint]) => ({
+            equipment: DataContext.INSTANCE.findByNickname(
+              "equipment",
+              nickname,
+            ),
+            hardpoint,
+          })),
+        cargo: iniLoadout?.asArray("cargo", true).map(([nickname, count]) => ({
+          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
+          count,
+        })),
+      };
+    }
+    if ("loadout" in body && body.loadout) {
+      const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
+        "loadouts",
+      )?.findByNickname("loadout", body.loadout);
+      loadout = {
+        equipment: iniLoadout
+          ?.asArray("equip", true)
+          .map(([nickname, hardpoint]) => ({
+            equipment: DataContext.INSTANCE.findByNickname(
+              "equipment",
+              nickname,
+            ),
+            hardpoint,
+          })),
+        cargo: iniLoadout?.asArray("cargo", true).map(([nickname, count]) => ({
+          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
+          count,
+        })),
+      };
+    }
+  }
+  return loadout;
+};
+
 export const calculateSector = (object: {
   position: [number, number, number];
   system: string;
@@ -265,12 +315,8 @@ export const calculateSector = (object: {
 };
 
 export const determineKind = (data: IObject | IBase | IZone) => {
-  const loadoutCargo =
-    "loadout" in data && data.loadout
-      ? DataContext.INSTANCE.ini<{ loadout: IniLoadout }>("loadouts")
-          ?.findByNickname("loadout", data.loadout)
-          ?.asArray("cargo", true)
-      : undefined;
+  const loadout = getLoadout(data);
+  const loadoutCargo = loadout?.cargo;
 
   let kind = "generic";
   if (data.type === "zone") {
@@ -353,49 +399,7 @@ export function serializeObject(
   } else if (body.infocard.includes("<RDL>")) {
     infocard = convertXmlToHtml(body.infocard);
   }
-  let loadout;
-  if ("loadout" in body && body.loadout) {
-    const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
-      "loadouts",
-    )?.findByNickname("loadout", body.loadout);
-    loadout = {
-      equipment: iniLoadout
-        ?.asArray("equip", true)
-        .map(([nickname, hardpoint]) => ({
-          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
-          hardpoint,
-        })),
-      cargo: iniLoadout?.asArray("cargo", true).map(([nickname, count]) => ({
-        equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
-        count,
-      })),
-    };
-  }
-  if ("archetype" in body && body.archetype?.includes("depot_")) {
-    const loadoutKey = DataContext.INSTANCE.ini("solars")
-      ?.findByNickname("solar", body.archetype)
-      ?.get("loadout") as string;
-    if (loadoutKey) {
-      const iniLoadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
-        "loadouts",
-      )?.findByNickname("loadout", loadoutKey);
-      loadout = {
-        equipment: iniLoadout
-          ?.asArray("equip", true)
-          .map(([nickname, hardpoint]) => ({
-            equipment: DataContext.INSTANCE.findByNickname(
-              "equipment",
-              nickname,
-            ),
-            hardpoint,
-          })),
-        cargo: iniLoadout?.asArray("cargo", true).map(([nickname, count]) => ({
-          equipment: DataContext.INSTANCE.findByNickname("equipment", nickname),
-          count,
-        })),
-      };
-    }
-  }
+  const loadout = getLoadout(body);
 
   return {
     ...body,
@@ -415,7 +419,7 @@ export function serializeObject(
         : undefined,
     }),
     ...("objectNickname" in body && { objectNickname: body.objectNickname }),
-    ...("loadout" in body && { loadout }),
+    ...(body.type !== "zone" && { loadout }),
     ...(body.position &&
       body.system && {
         sector: calculateSector({
