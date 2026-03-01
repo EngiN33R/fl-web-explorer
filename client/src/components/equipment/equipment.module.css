@@ -36,13 +36,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #ffffffde;
 
       &:not(.disabled) {
         cursor: pointer;
       }
       &.disabled {
         cursor: not-allowed;
-        opacity: 0.5;
+        background: #282828;
+        color: #ffffff67;
       }
 
       &.accept {
@@ -127,6 +129,7 @@
         cursor: pointer;
         display: flex;
         align-items: center;
+        color: #ffffffde;
 
         &:hover {
           background: #08f3;
@@ -160,6 +163,7 @@
         text-align: left;
         cursor: pointer;
         display: grid;
+        color: #ffffffde;
 
         &.active {
           background: #08f5;

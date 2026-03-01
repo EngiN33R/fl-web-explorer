@@ -28,6 +28,7 @@
 
     input[type="search"] {
       width: 100%;
+      color: #ffffffde;
     }
   }
 
@@ -156,6 +157,7 @@
         flex-direction: column;
         align-items: center;
         gap: 4px;
+        color: #ffffffde;
 
         .label {
         }
@@ -205,6 +207,7 @@
           cursor: pointer;
           border-bottom: 2px solid transparent;
           transition: border-color 0.2s;
+          color: #ffffffde;
 
           &[data-selected] {
             border-color: #08f5;
@@ -371,6 +374,7 @@
       border-color: transparent;
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
+      color: #ffffffde;
 
       &:focus {
         outline: none;
@@ -428,6 +432,7 @@
       flex: 1;
       width: 100%;
       padding: 8px;
+      color: #ffffffde;
 
       small {
         display: block;

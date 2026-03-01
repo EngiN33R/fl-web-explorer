@@ -36,6 +36,14 @@ body {
     "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 }
 
+a {
+  color: #8c8cff;
+
+  &:visited {
+    color: #ffadff;
+  }
+}
+
 #root {
   height: 100vh;
 }
@@ -43,6 +51,7 @@ body {
 button.multiselect {
   position: relative;
   border: none;
+  color: #ffffffde;
   background-color: #2f2f2f;
   cursor: pointer;
   padding: 0 8px;
