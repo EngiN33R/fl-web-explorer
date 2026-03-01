@@ -108,12 +108,11 @@
         line-height: 1;
       }
 
-      .jump {
+      .button {
         border: none;
         background: none;
         cursor: pointer;
-        margin-bottom: -6px;
-        margin-left: 8px;
+        margin-bottom: -10px;
         stroke: rgba(255, 255, 255, 0.5);
         color: rgba(255, 255, 255, 0.5);
 
@@ -147,6 +146,14 @@
 
     .actions {
       margin-top: 8px;
+      margin-left: -12px;
+      margin-right: -12px;
+      padding: 8px 12px;
+      border-top: 1px solid #323232;
+      border-bottom: 1px solid #323232;
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
 
       .action {
         background: none;
@@ -158,8 +165,11 @@
         align-items: center;
         gap: 4px;
         color: #ffffffde;
+        font-size: 13.333px;
+        text-decoration: none;
 
         .label {
+          line-height: 1;
         }
 
         &:last-child {

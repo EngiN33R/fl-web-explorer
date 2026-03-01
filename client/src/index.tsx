@@ -5,6 +5,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import "./index.css";
 
 import { routeTree } from "./routeTree.gen";
+import { NotificationsProvider } from "./data/context/notifications";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -22,14 +23,16 @@ const root = document.getElementById("root");
 
 if (!root) {
   throw new Error(
-    "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?"
+    "Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?",
   );
 }
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <NotificationsProvider>
+        <RouterProvider router={router} />
+      </NotificationsProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

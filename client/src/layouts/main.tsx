@@ -6,10 +6,14 @@ import {
 } from "react-icons/io5";
 import styles from "./main.module.css";
 import { PropsWithChildren } from "react";
+import { NotificationsHost } from "@/data/context/notifications";
 
 export function MainLayout({ children }: PropsWithChildren) {
   return (
     <div className={styles.root}>
+      <aside id="notifications" className={styles.notifications}>
+        <NotificationsHost />
+      </aside>
       <main id="content" className={styles.content}>
         {children}
       </main>
@@ -21,7 +25,7 @@ export function MainLayout({ children }: PropsWithChildren) {
               <span>Map</span>
             </Link>
           </li>
-          <li className={styles.disabled}>
+          <li className={styles.disabled} title="Coming soon!">
             <Link to="/trade" activeProps={{ className: styles.active }}>
               <IoCashOutline size={32} />
               <span>Trade</span>

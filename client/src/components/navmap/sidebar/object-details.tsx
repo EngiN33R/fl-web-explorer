@@ -7,10 +7,13 @@ import { LootableTabs } from "./tabs/lootable";
 import { ZoneTabs } from "./tabs/zone";
 import { ISearchResult } from "@api/types";
 import { useNavMapContext, useObjectDetails } from "@/data/context/navmap";
+import { IoInformationCircleOutline } from "react-icons/io5";
+import { useNotifications } from "@/data/context/notifications";
 
 export function ObjectDetails({ data }: { data: ISearchResult }) {
   const details = useObjectDetails(data);
   const { findPath, setMode } = useNavMapContext();
+  const { showNotification } = useNotifications();
 
   return (
     <div id="details-root" className={sx.detailsRoot}>
@@ -20,19 +23,26 @@ export function ObjectDetails({ data }: { data: ISearchResult }) {
         </div> */}
         <div className={sx.title}>
           <h1 className={sx.name}>{data?.name || "Unnamed"}</h1>
-          {"goto" in data && data.goto && (
-            <Link
-              className={sx.jump}
-              to="/navmap/$system"
-              params={{ system: data?.goto?.system }}
-              search={{ nickname: data?.goto?.object }}
-              state={(state) => ({ ...state })}
-              data-nickname={data?.goto?.system}
-              data-system={data?.goto?.system}
-            >
-              <UpRightArrow />
-            </Link>
-          )}
+          <button
+            className={sx.button}
+            style={{ fontSize: 24 }}
+            title={data?.objectNickname ?? data?.nickname}
+            onClick={() => {
+              const nickname = data?.objectNickname ?? data?.nickname;
+              if (nickname) {
+                window.navigator.clipboard
+                  .writeText(data?.objectNickname ?? data?.nickname)
+                  .then(() => {
+                    showNotification({
+                      body: "Copied object nickname to clipboard",
+                      timeout: 2000,
+                    });
+                  });
+              }
+            }}
+          >
+            <IoInformationCircleOutline />
+          </button>
         </div>
         <div className={sx.summary}>
           <div className={sx.icon}>{details?.icon}</div>
@@ -65,6 +75,21 @@ export function ObjectDetails({ data }: { data: ISearchResult }) {
             <Navigate />
             <span className={sx.label}>Navigate</span>
           </button>
+          {"goto" in data && data.goto && (
+            <Link
+              className={sx.action}
+              to="/navmap/$system"
+              params={{ system: data?.goto?.system }}
+              search={{ nickname: data?.goto?.object }}
+              state={(state) => ({ ...state })}
+              data-nickname={data?.goto?.system}
+              data-system={data?.goto?.system}
+              title="Go to jump destination system"
+            >
+              <UpRightArrow />
+              <span className={sx.label}>Traverse</span>
+            </Link>
+          )}
         </div>
       </div>
       {data.type === "base" ? (
