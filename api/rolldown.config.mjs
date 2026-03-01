@@ -8,5 +8,5 @@ export default defineConfig({
     format: "cjs",
     sourcemap: true,
   },
-  external: [/^node:/, "@imagemagick/magick-wasm", "jsdom"],
+  external: [/^node:/, "@imagemagick/magick-wasm", "jsdom", "lz4-wasm-nodejs"],
 });

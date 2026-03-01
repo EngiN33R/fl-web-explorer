@@ -1,6 +1,17 @@
-import { DataContext, IBase, IObject, ISystem, IZone } from "fl-node-orm";
+import {
+  DataContext,
+  IBase,
+  IObject,
+  IShip,
+  ISystem,
+  IZone,
+} from "fl-node-orm";
 import { convertXmlToHtml } from "./rdl";
-import { IniLoadout } from "fl-node-orm/dist/ini-types";
+import {
+  IniLoadout,
+  IniShipGood,
+  IniShipHullGood,
+} from "fl-node-orm/dist/ini-types";
 import { uniqBy } from "lodash";
 import {
   IBaseKind,
@@ -429,6 +440,38 @@ export function serializeObject(
       }),
     kind: determineKind(body),
   } as IObjectRes | IBaseRes | IZoneRes;
+}
+
+export function serializeShip(s: IShip) {
+  const shipHull = DataContext.INSTANCE.ini<{ good: IniShipHullGood }>(
+    "goods",
+  )?.findFirst(
+    "good",
+    (g) => g.get("category") === "shiphull" && g.get("ship") === s.nickname,
+  );
+  const shipPackage = DataContext.INSTANCE.ini<{ good: IniShipGood }>(
+    "goods",
+  )?.findFirst(
+    "good",
+    (g) =>
+      g.get("category") === "ship" &&
+      g.get("hull") === shipHull?.get("nickname"),
+  );
+  const addons =
+    shipPackage?.asArray("addon", true).map((a) => ({
+      equipment: DataContext.INSTANCE.entity("equipment").findByNickname(a[0]),
+      hardpoint: a[1],
+      count: a[2],
+    })) ?? [];
+  return {
+    ...s,
+    loadout: Object.fromEntries(
+      s.hardpoints.map((hp) => [
+        hp.id,
+        addons.find((a) => a.hardpoint === hp.id)?.equipment,
+      ]),
+    ),
+  };
 }
 
 export const deepParseInfocards = <T extends Record<string, any>>(

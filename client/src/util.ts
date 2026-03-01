@@ -1,3 +1,5 @@
+import { compress } from "lz4-wasm";
+
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -48,4 +50,15 @@ export function time(seconds: number) {
     parts.push(`${Math.round(seconds)}s`);
   }
   return parts.join(" ");
+}
+
+const enc = new TextEncoder();
+export async function asShareCode<T>(input: T) {
+  const buffer = compress(enc.encode(JSON.stringify(input)));
+  const base64url = await new Promise<string>((r) => {
+    const reader = new FileReader();
+    reader.onload = () => r(reader.result as string);
+    reader.readAsDataURL(new Blob([buffer as BlobPart]));
+  });
+  return base64url.slice(base64url.indexOf(",") + 1);
 }

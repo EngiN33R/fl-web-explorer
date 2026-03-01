@@ -48,6 +48,31 @@ a {
   height: 100vh;
 }
 
+button {
+  border: none;
+  color: #ffffffde;
+  background-color: #2f2f2f;
+  cursor: pointer;
+  padding: 8px 12px;
+
+  &:hover {
+    background-color: #1d3850;
+  }
+}
+
+button.secondary {
+  background-color: transparent;
+  border: 1px solid #2f2f2f;
+
+  &:hover {
+    border: 1px solid #1d3850;
+    color: #08f;
+  }
+}
+
+button.iconButton {
+}
+
 button.multiselect {
   position: relative;
   border: none;

@@ -174,3 +174,40 @@ export type IShipRes = IShip & {
 export type IEquipmentRes = IEquipment & {
   obtainable: ProcurementDetails[];
 };
+
+export type ILoadoutRes = {
+  ship?: IShip;
+  equipment: Record<string, IEquipment>;
+};
+
+export type ILoadoutStatsRes = {
+  damageTotalHull: number;
+  damageTotalShield: number;
+  damagePerSecondHull: number;
+  damagePerSecondShield: number;
+  weaponPowerPerSecond: number;
+  damageTotalByType: Record<string, number>;
+
+  shieldCapacity: number;
+  shieldRegen: number;
+  shieldRebuildTime: number;
+  shieldConstantPowerUsage: number;
+  shieldRebuildPowerUsage: number;
+  shieldResistances: Record<string, number>;
+  shieldMaxPowerUsage: number;
+
+  thrustTotal: number;
+  thrustRegen: number;
+  thrustSpeed: number;
+  thrustBalance: number;
+
+  powerTotal: number;
+  powerRegen: number;
+  powerBalance: number;
+  timeToDischarge: number;
+
+  totalHitPoints: number;
+  totalMass: number;
+  maxSpeed: number;
+  acceleration: number;
+};

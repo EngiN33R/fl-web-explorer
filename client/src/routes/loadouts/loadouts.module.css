@@ -101,13 +101,17 @@
 
     .stats {
       border: 1px solid #444444;
-      margin: 0;
-      padding: 8px;
-      list-style: none;
       display: flex;
       flex-direction: column;
+      padding: 8px;
       gap: 4px;
       width: 350px;
+
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
 
       h3 {
         margin: 0;
@@ -267,5 +271,41 @@
         }
       }
     }
+  }
+}
+
+.loadModal {
+  position: relative;
+  z-index: 50;
+}
+
+.loadModalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadModalPanel {
+  background-color: #181818;
+  border-radius: 8px;
+  padding: 16px;
+  width: 400px;
+
+  .input {
+    width: 100%;
+    padding: 4px;
+    resize: none;
+  }
+
+  .footer {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
   }
 }

@@ -5,6 +5,7 @@ import navigation from "./routers/navigation.router";
 import assets from "./routers/assets.router";
 import equipment from "./routers/equipment.router";
 import economy from "./routers/economy.router";
+import loadoutRouter from "./routers/loadout.router";
 import ai from "./routers/ai.router";
 import { readFile } from "fs/promises";
 import { initializeImageMagick } from "@imagemagick/magick-wasm";
@@ -32,22 +33,22 @@ app.get("/ids/:label", async (req, res) => {
 });
 app.get("/npc/:nickname", async (req, res) => {
   const npcshiparch = DataContext.INSTANCE.ini<{ npcshiparch: IniNpcShip }>(
-    "npcships"
+    "npcships",
   )?.findByNickname("npcshiparch", req.params.nickname);
   const level = Number(npcshiparch?.get("level")?.replace("d", ""));
   const ship = DataContext.INSTANCE.entity("ship").findByNickname(
-    npcshiparch?.get("ship_archetype") ?? ""
+    npcshiparch?.get("ship_archetype") ?? "",
   );
   const loadout = DataContext.INSTANCE.ini<{ loadout: IniLoadout }>(
-    "loadouts"
+    "loadouts",
   )?.findByNickname("loadout", npcshiparch?.get("loadout") ?? "");
   const factionProps = DataContext.INSTANCE.ini<{
     factionprops: IniFactionProp;
   }>("faction_prop")?.findFirst("factionprops", (s) =>
-    s.asArray("npc_ship").includes(req.params.nickname)
+    s.asArray("npc_ship").includes(req.params.nickname),
   );
   const faction = DataContext.INSTANCE.entity("faction").findByNickname(
-    factionProps?.get("affiliation") ?? ""
+    factionProps?.get("affiliation") ?? "",
   );
   const rankDesig = factionProps?.get("rank_desig");
   let rank: string | undefined;
@@ -88,11 +89,12 @@ app.use("/nav", navigation);
 app.use("/equip", equipment);
 app.use("/assets", assets);
 app.use("/economy", economy);
+app.use("/loadout", loadoutRouter);
 app.use("/ai", ai);
 async function bootstrap() {
   await DataContext.load(process.env.FL_ROOT as string);
   const imWasmBytes = await readFile(
-    "node_modules/@imagemagick/magick-wasm/dist/magick.wasm"
+    "node_modules/@imagemagick/magick-wasm/dist/magick.wasm",
   );
   await initializeImageMagick(imWasmBytes);
 }
