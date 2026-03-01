@@ -45,6 +45,17 @@ export type IZoneRes = Omit<IZone, "visit" | "properties" | "system"> & {
   kind: IZoneKind;
 };
 
+export type ISolarLoadoutRes = {
+  equipment: {
+    equipment: IEquipment;
+    hardpoint: string;
+  }[];
+  cargo: {
+    equipment: IEquipment;
+    count: number;
+  }[];
+};
+
 export type IObjectRes = Omit<
   IObject,
   "visit" | "properties" | "system" | "faction" | "loadout"
@@ -53,23 +64,18 @@ export type IObjectRes = Omit<
   properties?: BitmaskJSON<IZone["properties"]>;
   system?: { nickname: string; name: string };
   faction?: { nickname: string; name: string };
-  loadout?: {
-    equipment: {
-      equipment: IEquipment;
-      hardpoint: string;
-    }[];
-    cargo: {
-      equipment: IEquipment;
-      count: number;
-    }[];
-  };
+  loadout?: ISolarLoadoutRes;
   kind: IObjectKind;
 };
 
-export type IBaseRes = Omit<IBase, "visit" | "system" | "faction"> & {
+export type IBaseRes = Omit<
+  IBase,
+  "visit" | "system" | "faction" | "loadout"
+> & {
   visit?: BitmaskJSON<IZone["visit"]>;
   system?: { nickname: string; name: string };
   faction?: { nickname: string; name: string };
+  loadout?: ISolarLoadoutRes;
   kind: IBaseKind;
 };
 

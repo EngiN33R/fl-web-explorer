@@ -7,6 +7,7 @@ import { IoMap, IoPerson } from "react-icons/io5";
 import { transform } from "lodash";
 import { IFaction } from "fl-node-orm";
 import { credits } from "@/util";
+import { CombatTab } from "./object";
 
 type IRumor = {
   rumor: string;
@@ -194,23 +195,23 @@ export function BaseTabs({
     queryKey: ["base-goods", data.nickname],
     queryFn: () =>
       fetch(
-        `${import.meta.env.VITE_API_URL}/economy/offers/${data.nickname}`
+        `${import.meta.env.VITE_API_URL}/economy/offers/${data.nickname}`,
       ).then((res) => res.json()),
   });
 
   const commodities = offers?.filter(
-    (o) => o.equipment.type === "equipment" && o.equipment.kind === "commodity"
+    (o) => o.equipment.type === "equipment" && o.equipment.kind === "commodity",
   );
   const ships = offers?.filter((o) => o.equipment.type === "ship");
   const equipment = offers?.filter(
-    (o) => o.equipment.type === "equipment" && o.equipment.kind !== "commodity"
+    (o) => o.equipment.type === "equipment" && o.equipment.kind !== "commodity",
   );
 
   const knowledge = data.npcs?.flatMap((npc) =>
-    npc.knowledge.map((k) => ({ ...k, npc }))
+    npc.knowledge.map((k) => ({ ...k, npc })),
   );
   const rumors = data.npcs?.flatMap((npc) =>
-    npc.rumors.map((r) => ({ ...r, npc }))
+    npc.rumors.map((r) => ({ ...r, npc })),
   );
 
   const uniqueNpcMissions = transform(
@@ -226,7 +227,7 @@ export function BaseTabs({
       IBarData["missions"][number] & {
         npcs: IBarData["npcs"][number][];
       }
-    >
+    >,
   );
   const uniqueRumors = transform(
     rumors,
@@ -243,13 +244,15 @@ export function BaseTabs({
       }
       return acc;
     },
-    {} as Record<string, IRumor>
+    {} as Record<string, IRumor>,
   );
+
   return (
     <>
       <TabGroup className={sx.tabs}>
         <TabList>
           <Tab>Info</Tab>
+          {!!data?.loadout && <Tab>Combat</Tab>}
           <Tab>Bar</Tab>
           {!!commodities?.length && <Tab>Commodities</Tab>}
           {!!equipment?.length && <Tab>Equipment</Tab>}
@@ -259,6 +262,7 @@ export function BaseTabs({
           <TabPanel>
             <p dangerouslySetInnerHTML={{ __html: data.infocard }} />
           </TabPanel>
+          {!!data?.loadout && <CombatTab data={data} />}
           <TabPanel>
             {!!data.missions?.length && (
               <>

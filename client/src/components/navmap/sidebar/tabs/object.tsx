@@ -1,13 +1,12 @@
 import { ILoadoutStatsRes, ISearchResult } from "@api/types";
 import sx from "../sidebar.module.css";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
-import { IEquipment } from "fl-node-orm";
 import { groupBy } from "lodash";
 import { useQuery } from "@tanstack/react-query";
 import { decimal } from "@/util";
 
-export function ObjectTabs({ data }: { data: ISearchResult }) {
-  const loadout = data?.type === "object" ? data.loadout : undefined;
+export function CombatTab({ data }: { data: ISearchResult }) {
+  const loadout = "loadout" in data ? data.loadout : undefined;
   const { data: stats } = useQuery<ILoadoutStatsRes>({
     queryKey: [
       "loadout",
@@ -36,6 +35,34 @@ export function ObjectTabs({ data }: { data: ISearchResult }) {
   });
 
   return (
+    <TabPanel>
+      <div className="md-title">Equipment</div>
+      {Object.values(
+        groupBy(
+          loadout?.equipment.filter((e) => e?.equipment) ?? [],
+          (e) => e.equipment.nickname,
+        ),
+      ).map((list, idx) => {
+        const e = list[0];
+        return (
+          <div key={`${idx}-${e.equipment.nickname}-${e.hardpoint}`}>
+            {list.length}x {e.equipment.name}
+          </div>
+        );
+      })}
+      <div className="md-title" style={{ marginTop: 8 }}>
+        Stats
+      </div>
+      <div>Hull DPS: {decimal(stats?.damagePerSecondHull ?? 0)}</div>
+      <div>Shield DPS: {decimal(stats?.damagePerSecondShield ?? 0)}</div>
+    </TabPanel>
+  );
+}
+
+export function ObjectTabs({ data }: { data: ISearchResult }) {
+  const loadout = data?.type === "object" ? data.loadout : undefined;
+
+  return (
     <TabGroup className={sx.tabs}>
       <TabList>
         <Tab>Info</Tab>
@@ -45,29 +72,7 @@ export function ObjectTabs({ data }: { data: ISearchResult }) {
         <TabPanel>
           <p dangerouslySetInnerHTML={{ __html: data.infocard }} />
         </TabPanel>
-        {loadout && (
-          <TabPanel>
-            <div className="md-title">Equipment</div>
-            {Object.values(
-              groupBy(
-                loadout.equipment.filter((e) => e?.equipment),
-                (e) => e.equipment.nickname,
-              ),
-            ).map((list, idx) => {
-              const e = list[0];
-              return (
-                <div key={`${idx}-${e.equipment.nickname}-${e.hardpoint}`}>
-                  {list.length}x {e.equipment.name}
-                </div>
-              );
-            })}
-            <div className="md-title" style={{ marginTop: 8 }}>
-              Stats
-            </div>
-            <div>Hull DPS: {decimal(stats?.damagePerSecondHull ?? 0)}</div>
-            <div>Shield DPS: {decimal(stats?.damagePerSecondShield ?? 0)}</div>
-          </TabPanel>
-        )}
+        {loadout && <CombatTab data={data} />}
       </TabPanels>
     </TabGroup>
   );

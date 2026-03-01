@@ -85,7 +85,7 @@ function Node({
       style={{
         left: `${relX}%`,
         top: `${relY}%`,
-        transform: `translateX(-50%) scale(${1 / scale})`,
+        transform: `translateX(-50%) scale(${1 / scale ** 0.5})`,
       }}
     >
       <i className={styles.icon}>{details.icon}</i>
