@@ -6,11 +6,12 @@ import { groupBy } from "lodash";
 import { Ids } from "@/components/ids";
 import sx from "./loadouts.module.css";
 import { asShareCode, decimal, percentage } from "@/util";
-import { ILoadoutRes, IShipRes } from "@api/types";
+import { ILoadoutRes, ILoadoutStatsRes, IShipRes } from "@api/types";
 import { calculateLoadoutStats } from "@api/util/loadout";
 import { EquipmentDrawer } from "@/components/equipment/drawer";
 import { useNotifications } from "@/data/context/notifications";
 import { Description, Dialog, DialogPanel, Textarea } from "@headlessui/react";
+import { IoCloseOutline } from "react-icons/io5";
 
 export const Route = createFileRoute("/loadouts/")({
   component: LoadoutsView,
@@ -26,21 +27,14 @@ type LoadoutAction =
       type: "set_equipment";
       hardpointId: string;
       equipment: IEquipment;
+    }
+  | {
+      type: "clear_hardpoint";
+      hardpointId: string;
     };
 
 type LoadoutState = ILoadoutRes;
-
-const useLoadoutStats = (loadout: LoadoutState | undefined) => {
-  return useMemo(() => {
-    if (!loadout) {
-      return undefined;
-    }
-
-    return calculateLoadoutStats(loadout);
-  }, [loadout?.equipment]);
-};
-
-type LoadoutStats = NonNullable<ReturnType<typeof useLoadoutStats>>;
+type LoadoutStats = ILoadoutStatsRes;
 
 function Delta<K extends keyof LoadoutStats>({
   current,
@@ -104,6 +98,11 @@ function LoadoutsView() {
               [action.hardpointId]: action.equipment,
             },
           };
+        case "clear_hardpoint": {
+          const newState = { ...state, equipment: { ...state.equipment } };
+          delete newState.equipment[action.hardpointId];
+          return newState;
+        }
       }
     },
     {
@@ -118,7 +117,7 @@ function LoadoutsView() {
       equipment: Object.fromEntries(
         Object.entries(loadout.equipment ?? {}).map(([k, v]) => [
           k,
-          v.nickname,
+          v?.nickname,
         ]),
       ),
     };
@@ -132,6 +131,7 @@ function LoadoutsView() {
 
   const [hardpoint, setHardpoint] = useState<string | undefined>();
   const [selected, setSelected] = useState<IEquipment | undefined>();
+  const [clearHardpoint, setClearHardpoint] = useState<string | undefined>();
   const equipmentTypes =
     loadout.ship?.hardpoints
       .filter((hp) => hp.id === hardpoint)
@@ -154,15 +154,23 @@ function LoadoutsView() {
     },
   });
 
-  const currentStats = useLoadoutStats(loadout);
-  const hoverStats = useLoadoutStats(
-    selected && hardpoint
-      ? {
-          ...loadout,
-          equipment: { ...loadout.equipment, [hardpoint]: selected },
-        }
-      : undefined,
-  );
+  const currentStats = useMemo(() => {
+    return loadout ? calculateLoadoutStats(loadout) : undefined;
+  }, [loadout?.equipment]);
+  const hoverStats = useMemo(() => {
+    const stagedLoadout =
+      (selected && hardpoint) || clearHardpoint
+        ? {
+            ...loadout,
+            equipment: {
+              ...loadout.equipment,
+              ...(hardpoint && { [hardpoint]: selected }),
+              ...(clearHardpoint && { [clearHardpoint]: null }),
+            },
+          }
+        : undefined;
+    return stagedLoadout ? calculateLoadoutStats(stagedLoadout) : undefined;
+  }, [loadout?.equipment, selected, hardpoint, clearHardpoint]);
   const stats = hoverStats ?? currentStats;
   const mounted = hardpoint ? loadout.equipment[hardpoint] : undefined;
   const active = selected ?? mounted;
@@ -201,6 +209,7 @@ function LoadoutsView() {
                   className={`${sx.hardpoint} ${hardpoint === id ? sx.active : ""} ${hardpoint === id && active?.nickname !== loadout.equipment[id]?.nickname ? sx.pending : ""}`}
                 >
                   <button
+                    className={sx.equipment}
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -216,6 +225,23 @@ function LoadoutsView() {
                     <div className={sx.caption}>
                       <Ids>{hps[0].type}</Ids>
                     </div>
+                  </button>
+                  <button
+                    className={`${sx.clear} danger`}
+                    onClick={() => {
+                      dispatchLoadout({
+                        type: "clear_hardpoint",
+                        hardpointId: id,
+                      });
+                    }}
+                    onPointerEnter={() => {
+                      setClearHardpoint(id);
+                    }}
+                    onPointerLeave={() => {
+                      setClearHardpoint(undefined);
+                    }}
+                  >
+                    <IoCloseOutline />
                   </button>
                 </li>
               ),

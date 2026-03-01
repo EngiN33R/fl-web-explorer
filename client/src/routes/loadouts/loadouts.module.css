@@ -63,6 +63,9 @@
 
         .hardpoint {
           border: 1px solid #444444;
+          display: flex;
+          flex-direction: row;
+
           &:hover {
             border-color: #dadada;
           }
@@ -75,7 +78,7 @@
             }
           }
 
-          & > button {
+          & > .equipment {
             background: none;
             border: none;
             padding: 4px 8px;
@@ -84,7 +87,6 @@
             text-align: left;
             cursor: pointer;
             font-size: 100%;
-            height: 46px;
             color: #ffffffde;
 
             .name {
@@ -94,6 +96,10 @@
             .caption {
               font-size: 80%;
             }
+          }
+
+          & > .clear {
+            font-size: 16px;
           }
         }
       }

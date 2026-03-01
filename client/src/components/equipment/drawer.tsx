@@ -57,7 +57,7 @@ export function EquipmentDrawer({
   onClose: () => void;
   onSelect?: (equipment: IEquipment) => void;
   onConfirm: (equipment: IEquipment) => void;
-  value?: IEquipment;
+  value?: IEquipment | null;
   acceptDisabled?: boolean;
   types?: string[];
 }) {
@@ -73,7 +73,7 @@ export function EquipmentDrawer({
         : undefined;
       const url = new URL(`${import.meta.env.VITE_API_URL}/equip/search`);
       hardpoints?.forEach((type) =>
-        url.searchParams.append("hardpoint[]", type)
+        url.searchParams.append("hardpoint[]", type),
       );
       procurable
         ?.flatMap((source) => source.split(","))
@@ -133,7 +133,7 @@ export function EquipmentDrawer({
             sortDirection *
             (typeof a[sortColumn] === "string"
               ? (a[sortColumn] ?? "").localeCompare(
-                  (b[sortColumn] as string) ?? ""
+                  (b[sortColumn] as string) ?? "",
                 )
               : ((a[sortColumn] as number) ?? 0) -
                 ((b[sortColumn] as number) ?? 0))
@@ -344,6 +344,26 @@ export function EquipmentDrawer({
             );
           })}
         </ul>
+      </div>
+      <div className={sx.footer}>
+        <button
+          className={!selected || acceptDisabled ? "disabled" : ""}
+          onClick={() => {
+            if (selected) {
+              onConfirm(selected);
+            }
+          }}
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => {
+            onClose();
+            setSearch("");
+          }}
+        >
+          Close
+        </button>
       </div>
     </aside>
   );

@@ -177,7 +177,7 @@ export type IEquipmentRes = IEquipment & {
 
 export type ILoadoutRes = {
   ship?: IShip;
-  equipment: Record<string, IEquipment>;
+  equipment: Record<string, IEquipment | null | undefined>;
 };
 
 export type ILoadoutStatsRes = {

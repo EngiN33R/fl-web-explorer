@@ -3,7 +3,9 @@ import { ILoadoutRes } from "../types";
 import { IEquipment } from "fl-node-orm";
 
 export function calculateLoadoutStats(loadout: ILoadoutRes) {
-  const equipment = Object.values(loadout.equipment);
+  const equipment = Object.values(loadout.equipment).filter(
+    Boolean,
+  ) as IEquipment[];
   const equipmentGroups = groupBy(equipment, (e) => e.kind) as Record<
     IEquipment["kind"],
     IEquipment[]

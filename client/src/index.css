@@ -70,7 +70,16 @@ button.secondary {
   }
 }
 
-button.iconButton {
+button.danger {
+  &:hover {
+    background-color: #361818;
+  }
+}
+
+button.disabled {
+  cursor: not-allowed;
+  background: #282828;
+  color: #ffffff67;
 }
 
 button.multiselect {
