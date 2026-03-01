@@ -47,7 +47,7 @@ export type IZoneRes = Omit<IZone, "visit" | "properties" | "system"> & {
 
 export type IObjectRes = Omit<
   IObject,
-  "visit" | "properties" | "system" | "faction"
+  "visit" | "properties" | "system" | "faction" | "loadout"
 > & {
   visit?: BitmaskJSON<IZone["visit"]>;
   properties?: BitmaskJSON<IZone["properties"]>;

@@ -102,6 +102,7 @@
       display: flex;
       align-items: center;
       margin-bottom: 12px;
+      flex-wrap: wrap;
 
       h1 {
         margin: 0;
@@ -109,10 +110,11 @@
       }
 
       .button {
-        border: none;
         background: none;
         cursor: pointer;
+        padding: 0;
         margin-bottom: -10px;
+        margin-left: 6px;
         stroke: rgba(255, 255, 255, 0.5);
         color: rgba(255, 255, 255, 0.5);
 
